@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HotkeyInspector.App/HotkeyInspector.App.csproj" />
+    <Project Path="src/HotkeyInspector.Core/HotkeyInspector.Core.csproj" />
+    <Project Path="src/HotkeyInspector.Infrastructure/HotkeyInspector.Infrastructure.csproj" />
+  </Folder>
+</Solution>
