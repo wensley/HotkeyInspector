@@ -39,6 +39,17 @@ public sealed class HotkeyAvailabilityService
             ? KnownHotkeyCatalog.Lookup(hotkey)
             : KnownHotkeyCatalog.UnknownOccupied;
 
+        if (knownInfo == KnownHotkeyCatalog.UnknownOccupied && error == NativeMethods.ErrorHotkeyAlreadyRegistered)
+        {
+            var processOwner = ProcessHotkeyMatcher.GetOwnerFromRunningProcesses(hotkey.DisplayText);
+            if (processOwner != null)
+            {
+                knownInfo = new KnownHotkeyInfo(
+                    processOwner,
+                    $"该快捷键已被注册，当前正在运行的已知热键应用：{processOwner}。");
+            }
+        }
+
         var detail = error switch
         {
             NativeMethods.ErrorHotkeyAlreadyRegistered => knownInfo.Usage,
