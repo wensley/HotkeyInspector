@@ -3,5 +3,8 @@
     <Project Path="src/HotkeyInspector.App/HotkeyInspector.App.csproj" />
     <Project Path="src/HotkeyInspector.Core/HotkeyInspector.Core.csproj" />
     <Project Path="src/HotkeyInspector.Infrastructure/HotkeyInspector.Infrastructure.csproj" />
+    <Project Path="src/HotkeyInspector.HookBridge/HotkeyInspector.HookBridge.csproj" />
+  </Folder>
+  <Folder Name="/native/">
   </Folder>
 </Solution>

@@ -1,3 +1,5 @@
+using HotkeyInspector.Infrastructure;
+
 namespace HotkeyInspector.Core;
 
 public sealed record HotkeyCheckResult(
@@ -6,4 +8,6 @@ public sealed record HotkeyCheckResult(
     int ErrorCode,
     string Status,
     string Detail,
-    string OwnerApplication);
+    string OwnerApplication,
+    IReadOnlyList<ProcessInfo>? CandidateProcesses = null,
+    string[]? CandidateProcessNames = null);

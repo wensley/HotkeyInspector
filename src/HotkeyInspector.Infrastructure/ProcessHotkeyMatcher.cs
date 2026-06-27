@@ -1,68 +1,70 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace HotkeyInspector.Infrastructure;
 
 public static class ProcessHotkeyMatcher
 {
-    private static readonly Dictionary<string, string> KnownProcessApps = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["discord"] = "Discord",
-        ["spotify"] = "Spotify",
-        ["obs64"] = "OBS Studio",
-        ["obs32"] = "OBS Studio",
-        ["sharex"] = "ShareX",
-        ["greenshot"] = "Greenshot",
-        ["snipaste"] = "Snipaste",
-        ["powertoys"] = "Microsoft PowerToys",
-        ["autohotkey64"] = "AutoHotkey",
-        ["autohotkey32"] = "AutoHotkey",
-        ["autohotkey"] = "AutoHotkey",
-        ["listary"] = "Listary",
-        ["flow"] = "Flow Launcher",
-        ["flow.launcher"] = "Flow Launcher",
-        ["ditto"] = "Ditto Clipboard Manager",
-        ["nvidiashare"] = "NVIDIA GeForce Experience",
-        ["nvidia share"] = "NVIDIA GeForce Experience",
-        ["amdsoftware"] = "AMD Software: Adrenalin",
-        ["icue"] = "Corsair iCUE",
-        ["razersynapse"] = "Razer Synapse",
-        ["razersynapse3"] = "Razer Synapse",
-        ["lghub"] = "Logitech G HUB",
-        ["logioptions"] = "Logitech Options",
-        ["displayfusion"] = "DisplayFusion",
-        ["eartrumpet"] = "EarTrumpet",
-        ["everything"] = "Everything",
-        ["translucenttb"] = "TranslucentTB",
-        ["keyboad"] = "Keyboad",
-        ["wox"] = "Wox",
-    };
-
-    private static readonly Dictionary<string, string> KnownHotkeyOverrides = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Win+Shift+S"] = "截图工具",
-        ["Win+Alt+R"] = "Xbox Game Bar",
-        ["Win+Alt+G"] = "Xbox Game Bar",
-    };
-
-    private static List<string>? _cachedRunning;
+    private static List<ProcessInfo>? _cachedProcesses;
     private static DateTime _lastCacheTime;
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(3);
 
-    public static IReadOnlyList<string> GetRunningHotkeyApplications()
+    private static readonly Dictionary<string, string[]> ProcessAliases = new(StringComparer.OrdinalIgnoreCase)
     {
-        if (_cachedRunning != null && DateTime.UtcNow - _lastCacheTime < CacheDuration)
-            return _cachedRunning;
+        ["Code"] = ["Code"],
+        ["devenv"] = ["devenv"],
+        ["ShareX"] = ["ShareX"],
+        ["Snipaste"] = ["Snipaste"],
+        ["Greenshot"] = ["Greenshot"],
+        ["obs64"] = ["obs64"],
+        ["obs32"] = ["obs32"],
+        ["PowerToys"] = ["PowerToys"],
+        ["AutoHotkey64"] = ["AutoHotkey64", "AutoHotkey32", "AutoHotkeyUX", "autohotkey"],
+        ["Everything"] = ["Everything"],
+        ["flow.launcher"] = ["flow.launcher", "flow"],
+        ["Listary"] = ["Listary"],
+        ["lghub"] = ["lghub"],
+        ["RazerSynapse"] = ["RazerSynapse", "RazerSynapse3"],
+        ["RazerSynapse3"] = ["RazerSynapse3", "RazerSynapse"],
+        ["iCUE"] = ["iCUE"],
+    };
 
-        var running = new List<string>();
+    private static readonly HashSet<string> SystemProcesses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "explorer", "SearchHost", "SearchApp", "Widgets", "ShellExperienceHost",
+        "GameBar", "Taskmgr", "SnippingTool", "FeedbackHub", "Copilot",
+        "SystemSettings", "LogonUI", "winlogon", "ctfmon",
+    };
+
+    public static IReadOnlyList<ProcessInfo> GetRunningGuiProcesses()
+    {
+        const int refreshIntervalMs = 5000;
+        if (_cachedProcesses != null && (DateTime.UtcNow - _lastCacheTime).TotalMilliseconds < refreshIntervalMs)
+            return _cachedProcesses;
+
+        var list = new List<ProcessInfo>();
+        var seenIds = new HashSet<int>();
+
         try
         {
             foreach (var process in Process.GetProcesses())
             {
                 try
                 {
+                    if (process.HasExited) continue;
+
+                    var hMain = process.MainWindowHandle;
+                    if (hMain == IntPtr.Zero) continue;
+
+                    if (!seenIds.Add(process.Id)) continue;
+
+                    var title = process.MainWindowTitle;
                     var name = process.ProcessName;
-                    if (KnownProcessApps.TryGetValue(name, out var appName) && !running.Contains(appName))
-                        running.Add(appName);
+
+                    list.Add(new ProcessInfo(
+                        process.Id,
+                        name,
+                        string.IsNullOrWhiteSpace(title) ? null : title,
+                        GetWindowClass(hMain)));
                 }
                 catch
                 {
@@ -73,22 +75,57 @@ public static class ProcessHotkeyMatcher
         {
         }
 
-        _cachedRunning = running;
+        _cachedProcesses = list;
         _lastCacheTime = DateTime.UtcNow;
-        return running;
+        return list;
     }
 
-    public static string? GetOwnerFromRunningProcesses(string displayText)
+    public static string? FindMatchingProcess(IReadOnlyList<string>? catalogProcessNames)
     {
-        if (KnownHotkeyOverrides.TryGetValue(displayText, out var overrideOwner))
-            return overrideOwner;
+        if (catalogProcessNames == null || catalogProcessNames.Count == 0)
+            return null;
 
-        var running = GetRunningHotkeyApplications();
-        return running.Count > 0 ? string.Join(", ", running) : null;
+        var running = GetRunningGuiProcesses();
+        var runningNames = new HashSet<string>(running.Select(p => p.ProcessName), StringComparer.OrdinalIgnoreCase);
+
+        var matched = new List<string>();
+        foreach (var name in catalogProcessNames)
+        {
+            if (ProcessAliases.TryGetValue(name, out var aliases))
+            {
+                if (aliases.Any(a => runningNames.Contains(a)))
+                    matched.Add(name);
+            }
+            else if (runningNames.Contains(name))
+            {
+                matched.Add(name);
+            }
+        }
+
+        return matched.Count > 0 ? string.Join(", ", matched) : null;
     }
 
     public static void InvalidateCache()
     {
-        _cachedRunning = null;
+        _cachedProcesses = null;
     }
+
+    private static string GetWindowClass(IntPtr hWnd)
+    {
+        try
+        {
+            const int maxLength = 256;
+            var sb = new System.Text.StringBuilder(maxLength);
+            return GetClassNameW(hWnd, sb, maxLength) > 0 ? sb.ToString() : "";
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern int GetClassNameW(IntPtr hWnd, System.Text.StringBuilder lpClassName, int nMaxCount);
 }
+
+public sealed record ProcessInfo(int ProcessId, string ProcessName, string? WindowTitle, string WindowClass);

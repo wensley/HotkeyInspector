@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\HotkeyInspector.Core\HotkeyInspector.Core.csproj" />
     <ProjectReference Include="..\HotkeyInspector.Infrastructure\HotkeyInspector.Infrastructure.csproj" />
+    <ProjectReference Include="..\HotkeyInspector.HookBridge\HotkeyInspector.HookBridge.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

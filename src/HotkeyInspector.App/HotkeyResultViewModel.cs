@@ -11,4 +11,8 @@ public sealed class HotkeyResultViewModel
     public required string Detail { get; init; }
 
     public int ErrorCode { get; init; }
+
+    public string? CandidateProcesses { get; init; }
+
+    public bool HasCandidates => !string.IsNullOrWhiteSpace(CandidateProcesses);
 }

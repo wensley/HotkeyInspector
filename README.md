@@ -2,7 +2,7 @@
 
 Hotkey Inspector is a Windows desktop tool for checking whether global hotkeys are already registered by Windows or another application.
 
-This repository is the safe, no-injection version first: it uses the Windows `RegisterHotKey` API to test availability without injecting code into other processes. A native hook bridge can be added later for deeper attribution.
+The safe mode uses `RegisterHotKey` to test availability without injection. An optional native hook DLL can be loaded for real-time process-level attribution.
 
 ## Features
 
@@ -13,16 +13,22 @@ This repository is the safe, no-injection version first: it uses the Windows `Re
 - Copy results to the clipboard
 - Export results to CSV
 - Tray icon with open and exit actions
-- Layered project structure ready for HookBridge and installer work
+- **800+ entry KnownHotkeyCatalog** covering system, browser, communication, developer, and third-party hotkeys
+- **Runtime process matching** — cross-references catalog entries against running processes
+- **GUI process enumeration** — shows candidate processes when attribution is uncertain
+- **Optional native HookDll** for live `RegisterHotKey` interception (see `native/`)
 
 ## Project Structure
 
 ```text
 HotkeyInspector/
 ├── src/
-│   ├── HotkeyInspector.App
-│   ├── HotkeyInspector.Core
-│   └── HotkeyInspector.Infrastructure
+│   ├── HotkeyInspector.App          # WPF UI
+│   ├── HotkeyInspector.Core         # Domain logic + KnownHotkeyCatalog
+│   ├── HotkeyInspector.Infrastructure  # Win32 P/Invoke + process matching
+│   └── HotkeyInspector.HookBridge   # Managed bridge for native hook DLL
+├── native/
+│   └── HookDll/                     # C++ DLL: RegisterHotKey hook (optional)
 ├── docs/
 │   └── architecture.md
 ├── HotkeyInspector.slnx
@@ -34,12 +40,6 @@ HotkeyInspector/
 
 - Windows
 - .NET SDK 10.0.301 or later
-
-Check your SDK:
-
-```powershell
-dotnet --version
-```
 
 ## Build
 
@@ -59,8 +59,12 @@ dotnet run --project src\HotkeyInspector.App\HotkeyInspector.App.csproj
 dotnet publish src\HotkeyInspector.App\HotkeyInspector.App.csproj -c Release -r win-x64 --self-contained false
 ```
 
-## Detection Notes
+## Detection Model
 
-Windows does not expose a complete public API for enumerating all globally registered hotkeys. This app checks whether a hotkey is available by temporarily trying to register it. If registration fails with Windows error `1409`, the hotkey is already registered.
+1. Try `RegisterHotKey` — success means available.
+2. Error `1409` means occupied; look up the combination in `KnownHotkeyCatalog`.
+3. If the catalog entry has known process names, check which are actually running.
+4. If still uncertain, enumerate all visible GUI windows as candidates.
+5. **Optional**: compile and deploy `native/HookDll` for live interception of all `RegisterHotKey` calls system-wide.
 
-This tells you that a hotkey is occupied, but it does not always identify which application owns it. Process attribution is planned for a future optional HookBridge module.
+Windows does not expose a public API for enumerating registered hotkeys. The catalog + process matching approach covers the vast majority of real-world cases. The optional native hook provides complete coverage by intercepting `RegisterHotKey` at the API level.

@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using HotkeyInspector.Core;
+using HotkeyInspector.Infrastructure;
 
 namespace HotkeyInspector.App;
 
@@ -139,7 +140,6 @@ public partial class MainWindow : Window
         }
         catch (HotkeyParseException)
         {
-            // Some keys do not map cleanly to global hotkey virtual keys.
         }
     }
 
@@ -160,13 +160,24 @@ public partial class MainWindow : Window
         try
         {
             var result = _checker.Check(text);
+            var candidatesText = result.CandidateProcesses != null && result.CandidateProcesses.Count > 0
+                ? string.Join("; ", result.CandidateProcesses
+                    .Where(p => result.CandidateProcessNames == null ||
+                        !result.CandidateProcessNames.Any(n =>
+                            string.Equals(n, p.ProcessName, StringComparison.OrdinalIgnoreCase)))
+                    .Select(p => p.ProcessName)
+                    .Distinct()
+                    .Take(5))
+                : null;
+
             Results.Add(new HotkeyResultViewModel
             {
                 Hotkey = result.Hotkey.DisplayText,
                 Status = result.Status,
                 OwnerApplication = result.OwnerApplication,
                 Detail = result.Detail,
-                ErrorCode = result.ErrorCode
+                ErrorCode = result.ErrorCode,
+                CandidateProcesses = candidatesText
             });
             StatusText.Text = $"{result.Hotkey.DisplayText}: {result.Detail}";
         }
