@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 using HotkeyInspector.Infrastructure;
 
@@ -30,9 +29,10 @@ public sealed class HotkeyAvailabilityService
                 hotkey,
                 true,
                 0,
-                "可用",
-                "该快捷键当前可注册为全局快捷键。",
-                "无");
+                KnownHotkeyCatalog.Available,
+                null,
+                [],
+                HotkeyKnowledge.FindMatches(hotkey.DisplayText).ToList());
         }
 
         var knownInfo = error == NativeMethods.ErrorHotkeyAlreadyRegistered
@@ -44,65 +44,13 @@ public sealed class HotkeyAvailabilityService
             ? ProcessHotkeyMatcher.FindMatchingProcess(knownInfo.ProcessNames)
             : null;
 
-        string ownerApp;
-        string detail;
-
-        if (matchedProcess != null)
-        {
-            ownerApp = matchedProcess;
-            detail = $"该快捷键已被「{matchedProcess}」注册。{knownInfo.Usage}";
-        }
-        else if (knownInfo != KnownHotkeyCatalog.UnknownOccupied && knownInfo != KnownHotkeyCatalog.Available)
-        {
-            ownerApp = knownInfo.OwnerApplication;
-            var runningSuffix = "";
-            if (knownInfo.ProcessNames?.Length > 0)
-            {
-                var foundCandidates = candidates
-                    .Where(c => knownInfo.ProcessNames.Any(p =>
-                        string.Equals(p, c.ProcessName, StringComparison.OrdinalIgnoreCase)))
-                    .Select(c => c.ProcessName)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-                if (foundCandidates.Count > 0)
-                    runningSuffix = $"（当前正在运行：{string.Join("、", foundCandidates)}）";
-            }
-
-            detail = knownInfo.Usage;
-            if (!string.IsNullOrEmpty(runningSuffix))
-                detail += runningSuffix;
-        }
-        else
-        {
-            ownerApp = "未知应用";
-
-            // Show GUI processes as candidates
-            var guiProcesses = candidates
-                .Select(c => c.ProcessName)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Take(10)
-                .ToList();
-
-            detail = guiProcesses.Count > 0
-                ? $"该快捷键已被注册，但 Windows 未公开占用应用。当前正在运行的可能注册全局热键的进程：{string.Join("、", guiProcesses)}。"
-                : "该快捷键已被注册，但 Windows 未公开占用应用信息。";
-        }
-
-        detail = error switch
-        {
-            NativeMethods.ErrorHotkeyAlreadyRegistered => detail,
-            0 => "该快捷键不可用。",
-            _ => $"{detail} 错误信息：{new Win32Exception(error).Message}"
-        };
-
         return new HotkeyCheckResult(
             hotkey,
             false,
             error,
-            "已占用",
-            detail,
-            ownerApp,
+            knownInfo,
+            matchedProcess,
             candidates,
-            knownInfo.ProcessNames);
+            HotkeyKnowledge.FindMatches(hotkey.DisplayText).ToList());
     }
 }

@@ -24,7 +24,9 @@ public static class HotkeyParser
 
         if (parts.Length == 0)
         {
-            throw new HotkeyParseException("请输入快捷键，例如 Ctrl+Alt+K。");
+            throw new HotkeyParseException(new LocalizedText(
+                "请输入快捷键，例如 Ctrl+Alt+K。",
+                "Enter a shortcut, for example Ctrl+Alt+K."));
         }
 
         var modifiers = HotkeyModifier.None;
@@ -48,12 +50,16 @@ public static class HotkeyParser
 
             if (virtualKey is not null)
             {
-                throw new HotkeyParseException("一个快捷键只能包含一个非修饰键。");
+                throw new HotkeyParseException(new LocalizedText(
+                    "一个快捷键只能包含一个非修饰键。",
+                    "A shortcut can contain only one non-modifier key."));
             }
 
             if (!Keys.TryGetValue(token, out var vk))
             {
-                throw new HotkeyParseException($"不支持的按键：{rawPart}");
+                throw new HotkeyParseException(new LocalizedText(
+                    $"不支持的按键：{rawPart}",
+                    $"Unsupported key: {rawPart}"));
             }
 
             virtualKey = vk;
@@ -62,7 +68,9 @@ public static class HotkeyParser
 
         if (virtualKey is null || keyLabel is null)
         {
-            throw new HotkeyParseException("请添加一个非修饰键，例如 K 或 F9。");
+            throw new HotkeyParseException(new LocalizedText(
+                "请添加一个非修饰键，例如 K 或 F9。",
+                "Add a non-modifier key, for example K or F9."));
         }
 
         var label = string.Join("+", modifierLabels.Append(keyLabel));

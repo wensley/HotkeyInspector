@@ -1,3 +1,6 @@
 namespace HotkeyInspector.Core;
 
-public sealed class HotkeyParseException(string message) : Exception(message);
+public sealed class HotkeyParseException(LocalizedText message) : Exception(message.Zh)
+{
+    public LocalizedText Detail { get; } = message;
+}
