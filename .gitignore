@@ -2,6 +2,7 @@ bin/
 obj/
 .vs/
 .vscode/
+.wrangler/
 TestResults/
 *.user
 *.suo
@@ -9,3 +10,5 @@ TestResults/
 *.nupkg
 publish/
 artifacts/
+
+.tmp-media/

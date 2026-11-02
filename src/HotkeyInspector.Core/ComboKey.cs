@@ -2,64 +2,12 @@ namespace HotkeyInspector.Core;
 
 /// <summary>
 /// 键位组合归一化。用于把「解析器产出的 DisplayText」与「知识库中的 k 值」映射到同一套
-/// 规范形式，从而可跨写法匹配（例如 Super/Meta/Cmd 一律折叠为 Win，PrtSc/Print/PrintScreen
-/// 一律折叠为 PrintScreen，修饰键统一排序为 Win、Ctrl、Alt、Shift）。
+/// 规范形式，从而可跨写法匹配（修饰键统一排序为 Win、Ctrl、Alt、Shift；键名统一取自
+/// <see cref="KeyCatalog"/>）。平台专属写法（Cmd/Command/Super）保持原样，避免在 Windows
+/// 上把 macOS/Linux 快捷键误匹配到 Win 组合。
 /// </summary>
 public static class ComboKey
 {
-    private static readonly string[] ModifierOrder = ["Win", "Ctrl", "Alt", "Shift"];
-
-    private static readonly Dictionary<string, string> Synonyms = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["control"] = "Ctrl",
-        ["ctrl"] = "Ctrl",
-        ["shift"] = "Shift",
-        ["alt"] = "Alt",
-        ["option"] = "Alt",
-        ["opt"] = "Alt",
-        ["win"] = "Win",
-        ["windows"] = "Win",
-        ["super"] = "Win",
-        ["meta"] = "Win",
-        ["cmd"] = "Win",
-        ["command"] = "Win",
-        ["escape"] = "Esc",
-        ["esc"] = "Esc",
-        ["return"] = "Enter",
-        ["enter"] = "Enter",
-        ["del"] = "Delete",
-        ["delete"] = "Delete",
-        ["space"] = "Space",
-        ["spacebar"] = "Space",
-        ["ins"] = "Insert",
-        ["insert"] = "Insert",
-        ["pgup"] = "PageUp",
-        ["pageup"] = "PageUp",
-        ["pgdn"] = "PageDown",
-        ["pagedown"] = "PageDown",
-        ["prtsc"] = "PrintScreen",
-        ["print"] = "PrintScreen",
-        ["printscreen"] = "PrintScreen",
-        ["\u2190"] = "Left",
-        ["left"] = "Left",
-        ["arrowleft"] = "Left",
-        ["\u2192"] = "Right",
-        ["right"] = "Right",
-        ["arrowright"] = "Right",
-        ["\u2191"] = "Up",
-        ["up"] = "Up",
-        ["arrowup"] = "Up",
-        ["\u2193"] = "Down",
-        ["down"] = "Down",
-        ["arrowdown"] = "Down",
-        ["+"] = "Plus",
-        ["plus"] = "Plus",
-        ["-"] = "Minus",
-        ["minus"] = "Minus",
-        ["multiply"] = "Multiply",
-        ["divide"] = "Divide",
-    };
-
     public static string Canon(string token)
     {
         var trimmed = token.Trim();
@@ -68,9 +16,14 @@ public static class ComboKey
             return trimmed;
         }
 
-        if (Synonyms.TryGetValue(trimmed, out var mapped))
+        if (KeyCatalog.TryGetModifier(trimmed, out var modifierLabel, out _))
         {
-            return mapped;
+            return modifierLabel;
+        }
+
+        if (KeyCatalog.TryGetKey(trimmed, out _, out var keyLabel))
+        {
+            return keyLabel;
         }
 
         if (trimmed.Length == 1 && char.IsAsciiLetter(trimmed[0]))
@@ -99,7 +52,7 @@ public static class ComboKey
                 continue;
             }
 
-            if (Array.IndexOf(ModifierOrder, token) >= 0)
+            if (Array.IndexOf(KeyCatalog.ModifierOrder, token) >= 0)
             {
                 if (!modifiers.Contains(token, StringComparer.Ordinal))
                 {
@@ -112,7 +65,7 @@ public static class ComboKey
             }
         }
 
-        modifiers.Sort((a, b) => Array.IndexOf(ModifierOrder, a).CompareTo(Array.IndexOf(ModifierOrder, b)));
+        modifiers.Sort((a, b) => Array.IndexOf(KeyCatalog.ModifierOrder, a).CompareTo(Array.IndexOf(KeyCatalog.ModifierOrder, b)));
         return string.Join('+', modifiers.Concat(keys));
     }
 }

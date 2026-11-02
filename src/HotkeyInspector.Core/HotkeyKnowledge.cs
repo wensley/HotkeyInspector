@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -107,10 +108,23 @@ public static class HotkeyKnowledge
 
     private static KnowledgeBase Load()
     {
-        using var stream = typeof(HotkeyKnowledge).Assembly.GetManifestResourceStream(ResourceName)
-            ?? throw new InvalidOperationException($"找不到嵌入资源 {ResourceName}。");
+        try
+        {
+            using var stream = typeof(HotkeyKnowledge).Assembly.GetManifestResourceStream(ResourceName);
+            if (stream is null)
+            {
+                Debug.WriteLine($"[HotkeyKnowledge] 找不到嵌入资源 {ResourceName}，知识库匹配将不可用。");
+                return new KnowledgeBase();
+            }
 
-        var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-        return JsonSerializer.Deserialize<KnowledgeBase>(stream, options) ?? new KnowledgeBase();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return JsonSerializer.Deserialize<KnowledgeBase>(stream, options) ?? new KnowledgeBase();
+        }
+        catch (Exception ex)
+        {
+            // 知识库只是辅助信息，加载失败时降级为空库，不影响快捷键检测主流程。
+            Debug.WriteLine($"[HotkeyKnowledge] 加载知识库失败：{ex}");
+            return new KnowledgeBase();
+        }
     }
 }

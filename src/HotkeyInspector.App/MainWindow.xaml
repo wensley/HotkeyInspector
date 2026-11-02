@@ -6,8 +6,8 @@
         Title="{Binding [AppTitle], Source={x:Static local:Localization.Instance}}"
         Width="1240"
         Height="740"
-        MinWidth="1040"
-        MinHeight="560"
+        MinWidth="860"
+        MinHeight="500"
         Background="{StaticResource SurfaceBrush}"
         Closing="Window_Closing"
         KeyDown="Window_KeyDown">
@@ -51,9 +51,9 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -74,38 +74,40 @@
                          GotFocus="HotkeyTextBox_GotFocus"
                          LostFocus="HotkeyTextBox_LostFocus"
                          PreviewKeyDown="HotkeyTextBox_PreviewKeyDown" />
-                <StackPanel Grid.Row="0"
-                            Grid.Column="2"
-                            Orientation="Horizontal"
-                            Margin="10,0,0,0">
+
+                <!-- 按钮单独换行并允许折行：窄窗口 / 高缩放下不会把右侧按钮挤掉 -->
+                <WrapPanel Grid.Row="1"
+                           Grid.Column="1"
+                           Margin="0,6,0,0">
                     <Button Content="{Binding [BtnCheck], Source={x:Static local:Localization.Instance}}"
-                            Click="CheckButton_Click" />
+                            Click="CheckButton_Click"
+                            Margin="0,4,8,4" />
                     <primitives:ToggleButton x:Name="CaptureToggle"
                                              Content="{Binding [BtnCapture], Source={x:Static local:Localization.Instance}}"
                                              MinHeight="32"
                                              Padding="14,6"
-                                             Margin="0,0,8,0" />
+                                             Margin="0,4,8,4" />
                     <Button Content="{Binding [BtnScan], Source={x:Static local:Localization.Instance}}"
-                            Click="ScanButton_Click" />
+                            Click="ScanButton_Click"
+                            Margin="0,4,8,4" />
                     <Button Content="{Binding [BtnExport], Source={x:Static local:Localization.Instance}}"
-                            Click="ExportButton_Click" />
+                            Click="ExportButton_Click"
+                            Margin="0,4,8,4" />
                     <Button Content="{Binding [BtnLockCapture], Source={x:Static local:Localization.Instance}}"
                             Click="LockCaptureButton_Click"
-                            Margin="0" />
-                </StackPanel>
+                            Margin="0,4,0,4" />
+                </WrapPanel>
 
-                <TextBlock Grid.Row="1"
+                <TextBlock Grid.Row="2"
                            Grid.Column="1"
-                           Grid.ColumnSpan="2"
                            Text="{Binding [InputHint], Source={x:Static local:Localization.Instance}}"
                            Foreground="#3E6DB5"
                            TextWrapping="Wrap"
                            Margin="0,10,0,0" />
 
                 <Border x:Name="CapturePrompt"
-                        Grid.Row="2"
+                        Grid.Row="3"
                         Grid.Column="1"
-                        Grid.ColumnSpan="2"
                         Background="#FFF6E5"
                         BorderBrush="#F0C36D"
                         BorderThickness="1"
@@ -118,9 +120,8 @@
                                TextWrapping="Wrap" />
                 </Border>
 
-                <TextBlock Grid.Row="3"
+                <TextBlock Grid.Row="4"
                            Grid.Column="1"
-                           Grid.ColumnSpan="2"
                            Text="{Binding [Hint], Source={x:Static local:Localization.Instance}}"
                            Foreground="#5B6472"
                            TextWrapping="Wrap"
@@ -128,9 +129,8 @@
 
                 <!-- 实时知识库匹配（非锁定识别器） -->
                 <Border x:Name="LiveMatchesPanel"
-                        Grid.Row="4"
+                        Grid.Row="5"
                         Grid.Column="1"
-                        Grid.ColumnSpan="2"
                         Background="#F6F8FB"
                         BorderBrush="{StaticResource BorderBrushSoft}"
                         BorderThickness="1"
@@ -149,9 +149,8 @@
                 </Border>
 
                 <!-- 系统保留快捷键 -->
-                <StackPanel Grid.Row="5"
+                <StackPanel Grid.Row="6"
                             Grid.Column="1"
-                            Grid.ColumnSpan="2"
                             Margin="0,10,0,0">
                     <ToggleButton x:Name="ReservedToggle"
                                   Content="{Binding [ReservedTitle], Source={x:Static local:Localization.Instance}}"
@@ -179,7 +178,7 @@
                                        Margin="0,4,0,0" />
                             <TextBlock x:Name="ReservedUncapturableLabel"
                                        FontWeight="SemiBold"
-                                       Foreground="#B26A00"
+                                       Foreground="#8A5200"
                                        TextWrapping="Wrap"
                                        Margin="0,10,0,0" />
                             <TextBlock x:Name="ReservedUncapturableText"
@@ -194,17 +193,18 @@
 
         <DataGrid x:Name="ResultsGrid"
                   Grid.Row="2"
-                  ItemsSource="{Binding Results}"
+                  ItemsSource="{Binding Results.Items}"
+                  MinHeight="140"
                   IsReadOnly="True"
                   Background="White">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="{Binding [ColHotkey], Source={x:Static local:Localization.Instance}}" Binding="{Binding Hotkey}" Width="130" />
-                <DataGridTextColumn Header="{Binding [ColStatus], Source={x:Static local:Localization.Instance}}" Binding="{Binding Status}" Width="72" />
-                <DataGridTextColumn Header="{Binding [ColOwner], Source={x:Static local:Localization.Instance}}" Binding="{Binding OwnerApplication}" Width="150" />
-                <DataGridTextColumn Header="{Binding [ColDetail], Source={x:Static local:Localization.Instance}}" Binding="{Binding Detail}" Width="*" MinWidth="220" />
-                <DataGridTextColumn Header="{Binding [ColKnowledge], Source={x:Static local:Localization.Instance}}" Binding="{Binding Knowledge}" Width="260" />
-                <DataGridTextColumn Header="{Binding [ColCandidates], Source={x:Static local:Localization.Instance}}" Binding="{Binding CandidateProcesses}" Width="150" />
-                <DataGridTextColumn Header="{Binding [ColError], Source={x:Static local:Localization.Instance}}" Binding="{Binding ErrorCode}" Width="60" />
+                <DataGridTextColumn Header="{Binding [ColHotkey], Source={x:Static local:Localization.Instance}}" Binding="{Binding Hotkey}" Width="120" />
+                <DataGridTextColumn Header="{Binding [ColStatus], Source={x:Static local:Localization.Instance}}" Binding="{Binding Status}" Width="64" />
+                <DataGridTextColumn Header="{Binding [ColOwner], Source={x:Static local:Localization.Instance}}" Binding="{Binding OwnerApplication}" Width="130" />
+                <DataGridTextColumn Header="{Binding [ColDetail], Source={x:Static local:Localization.Instance}}" Binding="{Binding Detail}" Width="*" MinWidth="200" />
+                <DataGridTextColumn Header="{Binding [ColKnowledge], Source={x:Static local:Localization.Instance}}" Binding="{Binding Knowledge}" Width="220" />
+                <DataGridTextColumn Header="{Binding [ColCandidates], Source={x:Static local:Localization.Instance}}" Binding="{Binding CandidateProcesses}" Width="130" />
+                <DataGridTextColumn Header="{Binding [ColError], Source={x:Static local:Localization.Instance}}" Binding="{Binding ErrorCode}" Width="56" />
             </DataGrid.Columns>
         </DataGrid>
 
@@ -279,7 +279,7 @@
                                HorizontalAlignment="Center"
                                Margin="0,0,0,10" />
                     <TextBlock Text="{Binding [CaptureNote], Source={x:Static local:Localization.Instance}}"
-                               Foreground="#8A94A6"
+                               Foreground="#5B6472"
                                TextWrapping="Wrap"
                                Margin="0,0,0,16" />
                     <Button Content="{Binding [CaptureExitHint], Source={x:Static local:Localization.Instance}}"

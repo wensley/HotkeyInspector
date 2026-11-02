@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using HotkeyInspector.Core;
 
 namespace HotkeyInspector.App;
@@ -11,7 +12,12 @@ public sealed class Localization : INotifyPropertyChanged
 {
     public static Localization Instance { get; } = new();
 
-    private Language _language = Language.Zh;
+    private Language _language = DetectSystemLanguage();
+
+    private static Language DetectSystemLanguage()
+        => string.Equals(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName, "zh", StringComparison.OrdinalIgnoreCase)
+            ? Language.Zh
+            : Language.En;
 
     public Language Language
     {

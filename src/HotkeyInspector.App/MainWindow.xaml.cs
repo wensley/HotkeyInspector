@@ -1,58 +1,59 @@
-using System.Collections.ObjectModel;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using HotkeyInspector.Core;
+using HotkeyInspector.Infrastructure;
 
 namespace HotkeyInspector.App;
 
 public partial class MainWindow : Window
 {
-    private readonly HotkeyAvailabilityService _checker = new();
-    private readonly KeyboardHook _hook = new();
-    private readonly List<HotkeyRow> _rows = [];
+    private readonly HotkeyAvailabilityService _checker = new(new Win32HotkeyProbe(), new RunningProcessSource());
+    private readonly HotkeyCaptureSession _capture = new();
 
     private bool _isScanning;
-    private bool _captureActive;
     private bool _awaitingCapture;
     private string? _lastCaptured;
     private string? _liveCombo;
     private Func<Language, string>? _statusBuilder;
-
-    private sealed record ReservedHotkey(string Combo, LocalizedText Note, bool Uncapturable);
-
-    private static readonly ReservedHotkey[] ReservedHotkeys =
-    [
-        new("Win", new("打开或关闭“开始”菜单", "Open or close the Start menu"), false),
-        new("Alt+Tab", new("切换打开的窗口", "Switch between open windows"), false),
-        new("Ctrl+Esc", new("打开“开始”菜单", "Open the Start menu"), false),
-        new("Win+Tab", new("打开任务视图", "Open Task View"), false),
-        new("Alt+F4", new("关闭活动窗口", "Close the active window"), false),
-        new("Win+D", new("显示或隐藏桌面", "Show or hide the desktop"), false),
-        new("Win+L", new("锁定电脑", "Lock the computer"), false),
-        new("Win+Shift+S", new("区域截图到剪贴板", "Screenshot a region to clipboard"), false),
-        new("PrintScreen", new("全屏截图到剪贴板", "Screenshot the screen to clipboard"), false),
-        new("Ctrl+Shift+Esc", new("打开任务管理器", "Open Task Manager"), false),
-        new("Ctrl+Alt+Delete", new("打开安全屏幕（安全注意序列）", "Open the security screen (secure attention sequence)"), true),
-    ];
 
     private WindowStyle _prevStyle;
     private ResizeMode _prevResize;
     private WindowState _prevState;
     private bool _prevTopmost;
 
-    public ObservableCollection<HotkeyResultViewModel> Results { get; } = [];
+    public HotkeyResultsModel Results { get; } = new();
 
     public MainWindow()
     {
         InitializeComponent();
         DataContext = this;
+        ClampToWorkArea();
 
-        _hook.ComboCaptured += OnComboCaptured;
-        _hook.ModifiersChanged += OnModifiersChanged;
-        _hook.CancelRequested += ExitLockCapture;
+        _capture.ComboCaptured += OnComboCaptured;
+        _capture.ModifiersChanged += OnModifiersChanged;
+        _capture.CancelRequested += ExitLockCapture;
         Localization.Instance.LanguageChanged += OnLanguageChanged;
         RebuildReserved();
+    }
+
+    /// <summary>
+    /// 小屏 / 高缩放下初始尺寸可能超出工作区（例如 1366×768 @150% 逻辑宽度仅约 911px），
+    /// 这里把窗口收进工作区，避免右侧内容被裁掉。
+    /// </summary>
+    private void ClampToWorkArea()
+    {
+        var area = SystemParameters.WorkArea;
+        Width = Math.Min(Width, Math.Max(MinWidth, area.Width - 24));
+        Height = Math.Min(Height, Math.Max(MinHeight, area.Height - 24));
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        Localization.Instance.LanguageChanged -= OnLanguageChanged;
+        _capture.Dispose();
+        base.OnClosed(e);
     }
 
     private void CheckButton_Click(object sender, RoutedEventArgs e)
@@ -84,7 +85,7 @@ public partial class MainWindow : Window
             key = e.ImeProcessedKey;
         }
 
-        if (IsModifierKey(key))
+        if (WpfKeyMapper.IsModifier(key))
         {
             e.Handled = true;
             return;
@@ -97,7 +98,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        var combo = BuildComboFromModifiers(key);
+        var combo = WpfKeyMapper.BuildCombo(key);
         string text;
         try
         {
@@ -125,26 +126,35 @@ public partial class MainWindow : Window
         }
 
         _isScanning = true;
-        Results.Clear();
-        _rows.Clear();
-        SetStatus(_ => Localization.T("StatusScanningStart"));
-
-        var count = 0;
-        foreach (var hotkey in CommonHotkeyGenerator.Generate())
+        try
         {
-            CheckAndAdd(hotkey);
-            count++;
+            Results.Clear();
+            SetStatus(_ => Localization.T("StatusScanningStart"));
 
-            if (count % 12 == 0)
+            var count = 0;
+            foreach (var hotkey in CommonHotkeyGenerator.Generate())
             {
-                var progress = count;
-                SetStatus(_ => Localization.F("StatusScanningProgress", progress));
-                await Task.Delay(1);
-            }
-        }
+                CheckAndAdd(hotkey);
+                count++;
 
-        SetStatus(_ => Localization.F("StatusScanDone", count));
-        _isScanning = false;
+                if (count % 12 == 0)
+                {
+                    var progress = count;
+                    SetStatus(_ => Localization.F("StatusScanningProgress", progress));
+                    await Task.Delay(1);
+                }
+            }
+
+            SetStatus(_ => Localization.F("StatusScanDone", count));
+        }
+        catch (Exception ex)
+        {
+            SetStatus(_ => Localization.F("StatusScanFailed", ex.Message));
+        }
+        finally
+        {
+            _isScanning = false;
+        }
     }
 
     private void CopyButton_Click(object sender, RoutedEventArgs e)
@@ -155,8 +165,15 @@ public partial class MainWindow : Window
             return;
         }
 
-        System.Windows.Clipboard.SetText(BuildTabSeparatedResults());
-        SetStatus(_ => Localization.F("StatusCopied", Results.Count));
+        try
+        {
+            System.Windows.Clipboard.SetText(Results.ToTabSeparated());
+            SetStatus(_ => Localization.F("StatusCopied", Results.Count));
+        }
+        catch (Exception ex)
+        {
+            SetStatus(_ => Localization.F("StatusCopyFailed", ex.Message));
+        }
     }
 
     private void ExportButton_Click(object sender, RoutedEventArgs e)
@@ -179,14 +196,20 @@ public partial class MainWindow : Window
             return;
         }
 
-        File.WriteAllText(dialog.FileName, BuildCsvResults());
-        SetStatus(_ => Localization.F("StatusExported", Results.Count));
+        try
+        {
+            File.WriteAllText(dialog.FileName, Results.ToCsv(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            SetStatus(_ => Localization.F("StatusExported", Results.Count));
+        }
+        catch (Exception ex)
+        {
+            SetStatus(_ => Localization.F("StatusExportFailed", ex.Message));
+        }
     }
 
     private void ClearButton_Click(object sender, RoutedEventArgs e)
     {
         Results.Clear();
-        _rows.Clear();
         _liveCombo = null;
         LiveMatchesPanel.Visibility = Visibility.Collapsed;
         CapturePrompt.Visibility = Visibility.Collapsed;
@@ -202,7 +225,7 @@ public partial class MainWindow : Window
 
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
-        RebuildResults();
+        Results.Rebuild(Localization.Instance.Language);
         RebuildReserved();
         RefreshLiveMatches();
         if (_statusBuilder is not null)
@@ -213,18 +236,18 @@ public partial class MainWindow : Window
 
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
-        if (_captureActive || CaptureToggle.IsChecked != true)
+        if (_capture.IsActive || CaptureToggle.IsChecked != true)
         {
             return;
         }
 
         var key = e.Key == Key.System ? e.SystemKey : e.Key;
-        if (IsModifierKey(key))
+        if (WpfKeyMapper.IsModifier(key))
         {
             return;
         }
 
-        var text = BuildComboFromModifiers(key);
+        var text = WpfKeyMapper.BuildCombo(key);
 
         try
         {
@@ -238,7 +261,7 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (_captureActive)
+        if (_capture.IsActive)
         {
             ExitLockCapture();
         }
@@ -257,7 +280,7 @@ public partial class MainWindow : Window
 
     private void LockCaptureButton_Click(object sender, RoutedEventArgs e)
     {
-        if (_captureActive)
+        if (_capture.IsActive)
         {
             return;
         }
@@ -273,18 +296,13 @@ public partial class MainWindow : Window
         CaptureModsText.Text = string.Empty;
         CaptureMatchesPanel.Visibility = Visibility.Collapsed;
 
-        try
+        if (!_capture.TryStart(out var error))
         {
-            _hook.Start();
-        }
-        catch (Exception ex)
-        {
-            System.Windows.MessageBox.Show(this, ex.Message, Localization.T("CaptureTitle"),
+            System.Windows.MessageBox.Show(this, error, Localization.T("CaptureTitle"),
                 System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             return;
         }
 
-        _captureActive = true;
         CaptureOverlay.Visibility = Visibility.Visible;
 
         WindowStyle = WindowStyle.None;
@@ -300,13 +318,12 @@ public partial class MainWindow : Window
 
     private void ExitLockCapture()
     {
-        if (!_captureActive)
+        if (!_capture.IsActive)
         {
             return;
         }
 
-        _captureActive = false;
-        _hook.Stop();
+        _capture.Stop();
         CaptureOverlay.Visibility = Visibility.Collapsed;
 
         WindowStyle = _prevStyle;
@@ -324,7 +341,7 @@ public partial class MainWindow : Window
 
     private void OnModifiersChanged(string modifiers)
     {
-        if (!_captureActive)
+        if (!_capture.IsActive)
         {
             return;
         }
@@ -336,7 +353,7 @@ public partial class MainWindow : Window
 
     private void OnComboCaptured(string combo)
     {
-        if (!_captureActive)
+        if (!_capture.IsActive)
         {
             return;
         }
@@ -381,8 +398,7 @@ public partial class MainWindow : Window
             };
         }
 
-        _rows.Add(row);
-        Results.Add(HotkeyResultViewModel.Create(row, Localization.Instance.Language));
+        Results.Add(row, Localization.Instance.Language);
 
         if (interactive)
         {
@@ -456,89 +472,14 @@ public partial class MainWindow : Window
         ReservedCapturableLabel.Text = Localization.T("ReservedCapturable");
         ReservedUncapturableLabel.Text = Localization.T("ReservedUncapturable");
         ReservedCapturableText.Text = string.Join(Environment.NewLine,
-            ReservedHotkeys.Where(r => !r.Uncapturable).Select(r => $"{r.Combo}  —  {r.Note.Get(lang)}"));
+            SystemReservedHotkeys.All.Where(r => !r.Uncapturable).Select(r => $"{r.Combo}  —  {r.Note.Get(lang)}"));
         ReservedUncapturableText.Text = string.Join(Environment.NewLine,
-            ReservedHotkeys.Where(r => r.Uncapturable).Select(r => $"{r.Combo}  —  {r.Note.Get(lang)}"));
-    }
-
-    private void RebuildResults()
-    {
-        Results.Clear();
-        foreach (var row in _rows)
-        {
-            Results.Add(HotkeyResultViewModel.Create(row, Localization.Instance.Language));
-        }
+            SystemReservedHotkeys.All.Where(r => r.Uncapturable).Select(r => $"{r.Combo}  —  {r.Note.Get(lang)}"));
     }
 
     private void SetStatus(Func<Language, string> builder)
     {
         _statusBuilder = builder;
         StatusText.Text = builder(Localization.Instance.Language);
-    }
-
-    private string BuildTabSeparatedResults()
-    {
-        return string.Join(Environment.NewLine, Results.Select(r => string.Join('\t',
-            r.Hotkey, r.Status, r.OwnerApplication, r.Detail, r.Knowledge ?? string.Empty, r.ErrorCode)));
-    }
-
-    private string BuildCsvResults()
-    {
-        static string Escape(string value) => $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
-
-        var lines = new List<string> { Localization.T("CsvHeader") };
-        lines.AddRange(Results.Select(r => string.Join(',',
-            Escape(r.Hotkey), Escape(r.Status), Escape(r.OwnerApplication), Escape(r.Detail), Escape(r.Knowledge ?? string.Empty), r.ErrorCode)));
-        return string.Join(Environment.NewLine, lines);
-    }
-
-    private static string KeyToText(Key key)
-    {
-        return key switch
-        {
-            Key.Escape => "Esc",
-            Key.Return => "Enter",
-            Key.Space => "Space",
-            Key.Delete => "Delete",
-            Key.Insert => "Insert",
-            Key.PageUp => "PageUp",
-            Key.PageDown => "PageDown",
-            Key.PrintScreen => "PrintScreen",
-            Key.OemPeriod => "Period",
-            _ => key.ToString()
-        };
-    }
-
-    private static bool IsModifierKey(Key key) => key is
-        Key.LeftCtrl or Key.RightCtrl or
-        Key.LeftAlt or Key.RightAlt or
-        Key.LeftShift or Key.RightShift or
-        Key.LWin or Key.RWin;
-
-    private static string BuildComboFromModifiers(Key key)
-    {
-        var parts = new List<string>();
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Windows))
-        {
-            parts.Add("Win");
-        }
-
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
-        {
-            parts.Add("Ctrl");
-        }
-
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
-        {
-            parts.Add("Alt");
-        }
-
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
-        {
-            parts.Add("Shift");
-        }
-
-        parts.Add(KeyToText(key));
-        return string.Join('+', parts);
     }
 }

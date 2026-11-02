@@ -1,5 +1,3 @@
-using HotkeyInspector.Infrastructure;
-
 namespace HotkeyInspector.Core;
 
 public sealed record HotkeyResultText(string Status, string OwnerApplication, string Detail);
@@ -10,7 +8,7 @@ public sealed record HotkeyCheckResult(
     int ErrorCode,
     KnownHotkeyInfo? Known,
     string? MatchedProcess,
-    IReadOnlyList<ProcessInfo> Candidates,
+    IReadOnlyList<ProcessCandidate> Candidates,
     IReadOnlyList<KnowledgeMatch> Knowledge)
 {
     private static string T(Language language, string zh, string en)
@@ -28,6 +26,12 @@ public sealed record HotkeyCheckResult(
                 $"该快捷键已被「{MatchedProcess}」注册。",
                 $"This shortcut is registered by \"{MatchedProcess}\".")
                 + (Known?.Usage.Get(language) ?? string.Empty);
+        }
+        else if (IsAvailable)
+        {
+            owner = Known?.OwnerApplication.Get(language) ?? T(language, "无", "None");
+            detail = Known?.Usage.Get(language)
+                ?? T(language, "该快捷键当前可注册为全局快捷键。", "This shortcut can currently be registered as a global hotkey.");
         }
         else if (Known is not null && Known != KnownHotkeyCatalog.UnknownOccupied && Known != KnownHotkeyCatalog.Available)
         {
@@ -55,8 +59,7 @@ public sealed record HotkeyCheckResult(
 
         detail = ErrorCode switch
         {
-            NativeMethods.ErrorHotkeyAlreadyRegistered => detail,
-            0 => T(language, "该快捷键不可用。", "This shortcut is unavailable."),
+            0 or HotkeyErrorCodes.AlreadyRegistered => detail,
             _ => detail + T(language,
                 $" 错误信息：{new System.ComponentModel.Win32Exception(ErrorCode).Message}",
                 $" Error: {new System.ComponentModel.Win32Exception(ErrorCode).Message}")

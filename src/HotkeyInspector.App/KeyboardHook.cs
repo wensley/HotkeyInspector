@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using HotkeyInspector.Core;
 
 namespace HotkeyInspector.App;
 
@@ -17,9 +19,12 @@ public sealed class KeyboardHook : IDisposable
     private const uint LlkhfInjected = 0x10;
     private const uint LlkhfLowerIlInjected = 0x02;
 
+    private static readonly IntPtr Handled = new(1);
+
     private readonly HookProc _proc;
     private IntPtr _handle = IntPtr.Zero;
     private readonly HashSet<string> _activeModifiers = [];
+    private readonly HashSet<uint> _downKeys = [];
 
     public KeyboardHook()
     {
@@ -45,6 +50,7 @@ public sealed class KeyboardHook : IDisposable
         }
 
         _activeModifiers.Clear();
+        _downKeys.Clear();
         _handle = SetWindowsHookEx(WhKeyboardLl, _proc, GetModuleHandle(null), 0);
         if (_handle == IntPtr.Zero)
         {
@@ -62,6 +68,7 @@ public sealed class KeyboardHook : IDisposable
         UnhookWindowsHookEx(_handle);
         _handle = IntPtr.Zero;
         _activeModifiers.Clear();
+        _downKeys.Clear();
     }
 
     public void Dispose() => Stop();
@@ -73,6 +80,20 @@ public sealed class KeyboardHook : IDisposable
             return CallNextHookEx(_handle, nCode, wParam, lParam);
         }
 
+        try
+        {
+            return HandleInput(nCode, wParam, lParam);
+        }
+        catch (Exception ex)
+        {
+            // 异常绝不允许穿出本机回调：.NET 会直接终止进程。
+            Debug.WriteLine($"[KeyboardHook] 处理按键失败：{ex}");
+            return CallNextHookEx(_handle, nCode, wParam, lParam);
+        }
+    }
+
+    private IntPtr HandleInput(int nCode, IntPtr wParam, IntPtr lParam)
+    {
         var message = wParam.ToInt32();
         var data = Marshal.PtrToStructure<KbdLlHookStruct>(lParam);
         var flags = data.Flags;
@@ -91,7 +112,17 @@ public sealed class KeyboardHook : IDisposable
 
         var vk = (uint)data.VirtualKeyCode;
 
-        if (VirtualKeys.ModifierOf(vk) is { } modifier)
+        if (isUp)
+        {
+            _downKeys.Remove(vk);
+        }
+        else if (!_downKeys.Add(vk))
+        {
+            // 长按产生的重复 WM_KEYDOWN：拦截但不重复上报。
+            return Handled;
+        }
+
+        if (KeyCatalog.ModifierOf(vk) is { } modifier)
         {
             if (isDown)
             {
@@ -105,25 +136,22 @@ public sealed class KeyboardHook : IDisposable
                 RaiseModifiers();
             }
 
-            return 1; // 拦截修饰键，防止 Win/Alt 触发系统动作
+            return Handled; // 拦截修饰键，防止 Win/Alt 触发系统动作
         }
 
-        if (isDown)
+        if (isDown && KeyCatalog.NameOf(vk) is { } name)
         {
-            if (VirtualKeys.Name(vk) is { } name)
+            if (_activeModifiers.Count == 0 && name == "Esc")
             {
-                if (_activeModifiers.Count == 0 && name == "Esc")
-                {
-                    CancelRequested?.Invoke();
-                    return 1;
-                }
-
-                var combo = BuildCombo(name);
-                ComboCaptured?.Invoke(combo);
+                CancelRequested?.Invoke();
+                return Handled;
             }
+
+            var combo = BuildCombo(name);
+            ComboCaptured?.Invoke(combo);
         }
 
-        return 1; // 锁定期间拦截所有按键
+        return Handled; // 锁定期间拦截所有按键
     }
 
     private string BuildCombo(string key)

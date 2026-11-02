@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\HotkeyInspector.Core\HotkeyInspector.Core.csproj" />
+  </ItemGroup>
+
 </Project>

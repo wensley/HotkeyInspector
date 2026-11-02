@@ -17,8 +17,15 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         CheckDotnetRuntime();
         SetupTrayIcon();
+        PrewarmKnowledge();
         Localization.Instance.LanguageChanged += (_, _) => UpdateTrayText();
     }
+
+    /// <summary>
+    /// 预先加载知识库：避免首次按键（可能发生在全屏捕获的低级键盘钩子回调里）时才解析
+    /// 3000+ 条 JSON，阻塞钩子线程而被系统摘钩。
+    /// </summary>
+    private static void PrewarmKnowledge() => _ = HotkeyInspector.Core.HotkeyKnowledge.Base;
 
     /// <summary>
     /// 框架依赖版本需要 .NET 10 桌面运行时。若本机未检测到（或版本过低），提示用户前往官网下载。
@@ -75,8 +82,8 @@ public partial class App : System.Windows.Application
     private void SetupTrayIcon()
     {
         var menu = new Forms.ContextMenuStrip();
-        _openItem = new Forms.ToolStripMenuItem("打开", null, (_, _) => ShowMainWindow());
-        _exitItem = new Forms.ToolStripMenuItem("退出", null, (_, _) => ShutdownFromTray());
+        _openItem = new Forms.ToolStripMenuItem(Localization.T("TrayOpen"), null, (_, _) => ShowMainWindow());
+        _exitItem = new Forms.ToolStripMenuItem(Localization.T("TrayExit"), null, (_, _) => ShutdownFromTray());
         menu.Items.Add(_openItem);
         menu.Items.Add(_exitItem);
 
@@ -97,10 +104,9 @@ public partial class App : System.Windows.Application
             return;
         }
 
-        var zh = Localization.Instance.Language == Core.Language.Zh;
-        _trayIcon.Text = zh ? "快捷键检测" : "Hotkey Inspector";
-        _openItem.Text = zh ? "打开" : "Open";
-        _exitItem.Text = zh ? "退出" : "Exit";
+        _trayIcon.Text = Localization.T("TrayTooltip");
+        _openItem.Text = Localization.T("TrayOpen");
+        _exitItem.Text = Localization.T("TrayExit");
     }
 
     private void ShowMainWindow()

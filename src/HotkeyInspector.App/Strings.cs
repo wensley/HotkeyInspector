@@ -60,8 +60,8 @@ internal static class Strings
         ["CaptureExitHint"] = L("按 Esc 退出", "Press Esc to exit"),
         ["CaptureUseHint"] = L("捕获到的组合会填入上方输入框并自动检测。", "A captured combo is filled into the input box and checked automatically."),
         ["CaptureNote"] = L(
-            "锁定后，Win、Alt+Tab、Ctrl+Esc 等被系统抢占的组合也会被本应用捕获并拦截。Ctrl+Alt+Del 属于安全注意序列，无法被任何程序捕获。",
-            "While locked, combos reserved by the system such as Win, Alt+Tab, and Ctrl+Esc are captured and suppressed by this app. Ctrl+Alt+Del is a secure attention sequence and cannot be captured by any program."),
+            "锁定后，Win、Alt+Tab、Ctrl+Esc 等被系统抢占的组合也会被本应用捕获并拦截。Esc 用于退出锁定，因此无法捕获单独的 Esc。Ctrl+Alt+Del 属于安全注意序列，无法被任何程序捕获。",
+            "While locked, combos reserved by the system such as Win, Alt+Tab, and Ctrl+Esc are captured and suppressed by this app. Esc exits the lock, so a bare Esc cannot be captured. Ctrl+Alt+Del is a secure attention sequence and cannot be captured by any program."),
         ["CaptureNoMatch"] = L("知识库中未找到该组合", "No matching shortcut in the knowledge base"),
         ["CaptureMatches"] = L("知识库匹配", "Knowledge base matches"),
         ["CaptureWaitingMods"] = L("（等待非修饰键）", "(waiting for a non-modifier key)"),
@@ -71,10 +71,13 @@ internal static class Strings
         ["StatusScanningStart"] = L("正在扫描常见快捷键...", "Scanning common shortcuts..."),
         ["StatusScanningProgress"] = L("正在扫描... 已检测 {0} 个", "Scanning... {0} checked"),
         ["StatusScanDone"] = L("扫描完成，共检测 {0} 个快捷键。", "Scan complete: {0} shortcuts checked."),
+        ["StatusScanFailed"] = L("扫描失败：{0}", "Scan failed: {0}"),
         ["StatusNothingToCopy"] = L("没有可复制的结果。", "No results to copy."),
         ["StatusCopied"] = L("已复制 {0} 行结果。", "Copied {0} rows."),
+        ["StatusCopyFailed"] = L("复制失败：{0}", "Copy failed: {0}"),
         ["StatusNothingToExport"] = L("没有可导出的结果。", "No results to export."),
         ["StatusExported"] = L("已导出 {0} 行结果。", "Exported {0} rows."),
+        ["StatusExportFailed"] = L("导出失败：{0}", "Export failed: {0}"),
         ["StatusHiddenToTray"] = L("已隐藏到托盘。", "Minimized to tray."),
         ["StatusChecked"] = L("{0}: {1}", "{0}: {1}"),
 
@@ -88,6 +91,11 @@ internal static class Strings
         // Invalid row
         ["StatusInvalid"] = L("无效", "Invalid"),
         ["EmptyHotkey"] = L("(空)", "(empty)"),
+
+        // Tray
+        ["TrayTooltip"] = L("快捷键检测", "Hotkey Inspector"),
+        ["TrayOpen"] = L("打开", "Open"),
+        ["TrayExit"] = L("退出", "Exit"),
 
         // .NET runtime prompt
         ["RuntimeMissingTitle"] = L("缺少 .NET 运行时", "Missing .NET Runtime"),

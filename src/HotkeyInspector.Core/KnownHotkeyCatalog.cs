@@ -2,7 +2,7 @@ namespace HotkeyInspector.Core;
 
 public static class KnownHotkeyCatalog
 {
-    private static readonly Dictionary<string, KnownHotkeyInfo> KnownHotkeys = BuildCatalog();
+    private static readonly Dictionary<string, List<KnownHotkeyInfo>> KnownHotkeys = BuildCatalog();
 
     public static KnownHotkeyInfo UnknownOccupied { get; } = new(
         new LocalizedText("未知应用", "Unknown app"),
@@ -18,18 +18,36 @@ public static class KnownHotkeyCatalog
         new LocalizedText("无", "None"),
         new LocalizedText("快捷键格式无效。", "The shortcut format is invalid."));
 
-    public static KnownHotkeyInfo Lookup(HotkeyDefinition hotkey)
+    /// <summary>目录中保留的全部归属记录数（同一组合可以有多条）。</summary>
+    public static int EntryCount => KnownHotkeys.Sum(pair => pair.Value.Count);
+
+    /// <summary>存在多个归属的组合数量。</summary>
+    public static int ConflictCount => KnownHotkeys.Count(pair => pair.Value.Count > 1);
+
+    public static KnownHotkeyInfo Lookup(HotkeyDefinition hotkey) => Lookup(hotkey.DisplayText);
+
+    /// <summary>
+    /// 按归一化键位查找占用方。多个应用共用同一组合时，返回优先级最高者
+    /// （系统 &gt; 浏览器 &gt; 截图/录制 &gt; 即时通讯 &gt; 开发者工具 &gt; 生产力 &gt; 启动器 &gt; 媒体 &gt; 游戏 &gt; 外设）。
+    /// </summary>
+    public static KnownHotkeyInfo Lookup(string combo)
     {
-        return KnownHotkeys.TryGetValue(hotkey.DisplayText, out var info)
-            ? info
-            : UnknownOccupied;
+        var matches = LookupAll(combo);
+        return matches.Count > 0 ? matches[0] : UnknownOccupied;
     }
 
-    public static IEnumerable<KeyValuePair<string, KnownHotkeyInfo>> GetAllEntries() => KnownHotkeys;
-
-    private static Dictionary<string, KnownHotkeyInfo> BuildCatalog()
+    public static IReadOnlyList<KnownHotkeyInfo> LookupAll(string combo)
     {
-        var d = new Dictionary<string, KnownHotkeyInfo>(StringComparer.OrdinalIgnoreCase);
+        var key = ComboKey.Normalize(combo);
+        return KnownHotkeys.TryGetValue(key, out var list) ? list : [];
+    }
+
+    public static IEnumerable<KeyValuePair<string, KnownHotkeyInfo>> GetAllEntries()
+        => KnownHotkeys.SelectMany(pair => pair.Value.Select(info => new KeyValuePair<string, KnownHotkeyInfo>(pair.Key, info)));
+
+    private static Dictionary<string, List<KnownHotkeyInfo>> BuildCatalog()
+    {
+        var d = new Dictionary<string, List<KnownHotkeyInfo>>(StringComparer.Ordinal);
 
         AddSystemHotkeys(d);
         AddBrowserHotkeys(d);
@@ -42,14 +60,51 @@ public static class KnownHotkeyCatalog
         AddGamingHotkeys(d);
         AddThirdPartyHotkeys(d);
 
+        foreach (var key in d.Keys.ToList())
+        {
+            d[key] = d[key].OrderBy(CategoryPriority).ToList();
+        }
+
         return d;
     }
 
-    private static void AddSystemHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void Add(Dictionary<string, List<KnownHotkeyInfo>> d, string key, KnownHotkeyInfo info)
+    {
+        var normalized = ComboKey.Normalize(key);
+        if (normalized.Length == 0)
+        {
+            return;
+        }
+
+        if (!d.TryGetValue(normalized, out var list))
+        {
+            list = [];
+            d[normalized] = list;
+        }
+
+        list.Add(info);
+    }
+
+    private static int CategoryPriority(KnownHotkeyInfo info) => info.Category?.Zh switch
+    {
+        "系统" => 0,
+        "浏览器" => 1,
+        "截图/录制" => 2,
+        "即时通讯" => 3,
+        "开发者工具" => 4,
+        "生产力工具" => 5,
+        "启动器" => 6,
+        "媒体" => 7,
+        "游戏" => 8,
+        "外设驱动" => 9,
+        _ => 10
+    };
+
+    private static void AddSystemHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("系统", "System");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // Win key - desktop / shell
         a("Win+D", "Windows 资源管理器", "Windows Explorer", "显示或隐藏桌面。", "Show or hide the desktop.", ["explorer"]);
@@ -149,11 +204,11 @@ public static class KnownHotkeyCatalog
         a("Ctrl+Esc", "Windows", "Windows", "打开开始菜单（等效于按 Win 键）。", "Open the Start menu (equivalent to pressing the Win key).", ["ShellExperienceHost"]);
     }
 
-    private static void AddBrowserHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddBrowserHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("浏览器", "Browser");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         var browsers = new[] { "chrome", "msedge", "firefox", "brave", "opera" };
         var browsersAndIe = new[] { "chrome", "msedge", "firefox", "brave", "opera", "iexplore" };
@@ -188,11 +243,11 @@ public static class KnownHotkeyCatalog
         a("Ctrl+9", "浏览器", "Browser", "切换到最后一个标签页。", "Switch to the last tab.", browsers);
     }
 
-    private static void AddScreenshotRecordingHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddScreenshotRecordingHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("截图/录制", "Screenshot / Recording");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // ShareX
         a("Shift+PrintScreen", "ShareX", "ShareX", "截取矩形区域。", "Capture a rectangular region.", ["ShareX"]);
@@ -237,11 +292,11 @@ public static class KnownHotkeyCatalog
         a("Alt+Shift+B", "AMD Software: Adrenalin", "AMD Software: Adrenalin", "开始或停止即时重放。", "Start or stop Instant Replay.", ["amdsoftware"]);
     }
 
-    private static void AddCommunicationHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddCommunicationHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("即时通讯", "Messaging");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // Discord
         a("Ctrl+`", "Discord", "Discord", "切换 Discord 覆盖层。", "Toggle the Discord overlay.", ["discord"]);
@@ -324,11 +379,11 @@ public static class KnownHotkeyCatalog
         a("Ctrl+Delete", "WhatsApp", "WhatsApp", "删除聊天。", "Delete the chat.", ["WhatsApp"]);
     }
 
-    private static void AddDeveloperHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddDeveloperHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("开发者工具", "Developer Tools");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // VS Code
         a("Ctrl+Shift+P", "VS Code", "VS Code", "打开命令面板。", "Open the Command Palette.", ["Code"]);
@@ -427,11 +482,11 @@ public static class KnownHotkeyCatalog
         a("Ctrl+,", "Windows Terminal", "Windows Terminal", "打开设置页面。", "Open the settings page.", ["WindowsTerminal"]);
     }
 
-    private static void AddProductivityHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddProductivityHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("生产力工具", "Productivity");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // Microsoft PowerToys
         a("Alt+Space", "PowerToys PowerToys Run", "PowerToys Run", "打开 PowerToys Run 快速启动器。", "Open the PowerToys Run launcher.", ["PowerToys"]);
@@ -479,21 +534,21 @@ public static class KnownHotkeyCatalog
         a("Alt+Space", "Wox", "Wox", "打开 Wox 快速启动器。", "Open the Wox launcher.", ["Wox"]);
     }
 
-    private static void AddLauncherHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddLauncherHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("启动器", "Launcher");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // General launcher hotkeys
         a("Alt+Space", "快速启动器（通用）", "Quick launcher (generic)", "打开应用启动器——PowerToys Run/Flow Launcher/Wox/Keyboad 等。", "Open an app launcher such as PowerToys Run, Flow Launcher, Wox, or Keypirinha.", ["PowerToys", "flow.launcher", "Wox", "Keyboad"]);
     }
 
-    private static void AddMediaHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddMediaHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("媒体", "Media");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // Spotify
         a("Ctrl+Left", "Spotify", "Spotify", "上一首。", "Previous track.", ["Spotify"]);
@@ -509,11 +564,11 @@ public static class KnownHotkeyCatalog
         // MPC-HC / MPC-BE (empty, shares Ctrl+Shift+Esc with Task Manager)
     }
 
-    private static void AddGamingHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddGamingHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("游戏", "Gaming");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // Steam
         a("Shift+Tab", "Steam", "Steam", "在游戏中打开 Steam 覆盖层。", "Open the Steam overlay in-game.", ["Steam"]);
@@ -526,11 +581,11 @@ public static class KnownHotkeyCatalog
         a("Alt+Shift+E", "SteelSeries GG", "SteelSeries GG", "打开或关闭 Sonar 均衡器。", "Toggle the Sonar equalizer.", ["SteelSeriesGG"]);
     }
 
-    private static void AddThirdPartyHotkeys(Dictionary<string, KnownHotkeyInfo> d)
+    private static void AddThirdPartyHotkeys(Dictionary<string, List<KnownHotkeyInfo>> d)
     {
         var cat = new LocalizedText("外设驱动", "Peripheral Drivers");
         void a(string k, string oz, string oe, string uz, string ue, string[]? p = null)
-            => d[k] = new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat);
+            => Add(d, k, new(new LocalizedText(oz, oe), new LocalizedText(uz, ue), p, cat));
 
         // Logitech G HUB
         a("Ctrl+Shift+F1", "Logitech G HUB", "Logitech G HUB", "切换 G HUB 配置（鼠标灵敏度/DPI 切换）。", "Cycle G HUB profiles (mouse sensitivity / DPI switch).", ["lghub"]);
