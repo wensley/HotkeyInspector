@@ -90,9 +90,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=31">
+  <link rel="stylesheet" href="tools.css?v=34">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=30" defer></script>
+  <script src="tools.js?v=33" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -406,10 +406,29 @@ const PANELS = {
   </section>`,
   har: () => `<section class="tool-work" data-panel="har-file-viewer" data-handler="har-file-viewer">
     ${field("选择 .har 文件", `<input type="file" data-opt="file" accept=".har,application/json">`)}
-    <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">解析</button></div>
+    <div class="tool-actions">
+      <button class="cmd-btn cmd-btn-primary" data-act="run">解析</button>
+      <button class="cmd-btn" data-act="clearFile">清空</button>
+    </div>
+    <div class="har-filter" data-filter role="group" aria-label="按类型过滤">
+      <button type="button" data-filter-val="all" aria-pressed="true">全部</button>
+      <button type="button" data-filter-val="xhr" aria-pressed="false">XHR</button>
+      <button type="button" data-filter-val="js" aria-pressed="false">JS</button>
+      <button type="button" data-filter-val="css" aria-pressed="false">CSS</button>
+      <button type="button" data-filter-val="image" aria-pressed="false">图片</button>
+      <button type="button" data-filter-val="media" aria-pressed="false">媒体</button>
+      <button type="button" data-filter-val="font" aria-pressed="false">字体</button>
+      <button type="button" data-filter-val="document" aria-pressed="false">文档</button>
+      <button type="button" data-filter-val="error" aria-pressed="false">错误</button>
+    </div>
+    <dl class="har-summary" data-summary></dl>
+    <div class="cmd-table-wrap">
+      <table class="cmd-table har-table">
+        <thead><tr><th>状态</th><th>方法</th><th>URL</th><th data-sort="time" class="har-sort">耗时</th><th data-sort="size" class="har-sort">大小</th></tr></thead>
+        <tbody data-rows></tbody>
+      </table>
+    </div>
     <p class="tool-status" data-status role="status" aria-live="polite">文件只在本地解析，不会上传。</p>
-    <dl class="tool-dl" data-summary></dl>
-    <div class="cmd-table-wrap"><table class="cmd-table"><thead><tr><th>状态</th><th>方法</th><th>URL</th><th>耗时</th><th>大小</th></tr></thead><tbody data-rows></tbody></table></div>
   </section>`,
   compression: () => `<section class="tool-work" data-panel="compression-comparison" data-handler="compression-comparison">
     ${field("选择文件", `<input type="file" data-opt="file">`)}
