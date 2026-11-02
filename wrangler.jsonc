@@ -1,0 +1,34 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zuhejian",
+  "workers_dev": true,
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-10-20",
+  "assets": {
+    "directory": "./docs/hotkeys",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": [
+      "/version",
+      "/tools/json",
+      "/tools/url",
+      "/tools/html",
+      "/tools/color",
+      "/tools/timestamp",
+      "/tools/uuid",
+      "/tools/hash",
+      "/tools/jwt",
+      "/tools/regex",
+      "/tools/cidr",
+      "/tools/httpstatus"
+    ]
+  },
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
+  "routes": [
+    { "pattern": "zuhejian.com", "custom_domain": true },
+    { "pattern": "www.zuhejian.com", "custom_domain": true }
+  ]
+}

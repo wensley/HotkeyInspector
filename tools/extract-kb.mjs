@@ -122,28 +122,15 @@ const smHtml = `<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-4C078SNCZ2"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-4C078SNCZ2');
-</script>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>${esc(smL.title.zh)} · 快捷键大全</title>
 <meta name="description" content="快捷键大全站点地图：${smCatCount} 个分类、${smAppCount} 款应用的快捷键索引。">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="${SITE}sitemap.html">
 <link rel="alternate" hreflang="zh-CN" href="${SITE}sitemap.html">
 <link rel="alternate" hreflang="en" href="${SITE}sitemap.html?lang=en">
-<link rel="stylesheet" href="styles.css">
-<script>
-  (function () {
-    var t = localStorage.getItem("hk-theme");
-    if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
-  })();
-</script>
+<script src="theme-init.js?v=1"></script>
+<link rel="stylesheet" href="styles.css?v=6">
 <style>
   body { padding-top: 0; }
   .sm-header {
