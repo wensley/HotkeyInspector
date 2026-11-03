@@ -26,8 +26,9 @@ const T = (id, name, glyph, cat, desc, tags, keywords, ui, libs) => ({
   commands: []
 });
 
-const text = (label, ph, outLabel, opts, acts) => ({
-  k: "text", in: label, ph, out: outLabel || "结果", opts: opts || [], acts: acts || [["run", null]]
+const text = (label, ph, outLabel, opts, acts, views, viewsAt) => ({
+  k: "text", in: label, ph, out: outLabel || "结果", opts: opts || [], acts: acts || [["run", null]],
+  views: views || ["text"], viewsAt: viewsAt || "out"
 });
 
 export const TOOLS = [
@@ -81,26 +82,36 @@ export const TOOLS = [
 
   /* ---------- 格式化 ---------- */
   T("json-formatter", "JSON 格式化", "{}", "format", "格式化、压缩和校验 JSON，报错给出行列位置。", "JSON 格式化", "json 格式化 美化 压缩 校验",
-    text("输入 JSON", '{"site":"zuhejian.com","tools":105}', "结果", [], [["format", "格式化"], ["minify", "压缩"], ["validate", "仅校验"]])),
+    text("输入 JSON", '{"site":"zuhejian.com","tools":105}', "结果", [], [["format", "格式化"], ["minify", "压缩"], ["repair", "修复"], ["validate", "仅校验"]], ["text", "tree", "table"], "in"), ["jsonrepair"]),
   T("json-validator", "JSON 校验器", "✓", "format", "校验 JSON 语法，并给出错误位置和修复提示。", "JSON 校验", "json 校验 语法 错误 位置",
-    text("输入 JSON", '{"site":"zuhejian.com"}', "校验结果", [], [["validate", "校验"]])),
+    text("输入 JSON", '{"site":"zuhejian.com"}', "校验结果", [], [["validate", "校验"], ["repair", "修复"]], ["text", "tree", "table"], "in"), ["jsonrepair"]),
   T("json-to-csv", "JSON 转 CSV", "csv", "format", "把对象数组转成 CSV，自动收集列名并处理引号。", "JSON CSV", "json csv 转换 表格",
-    text("JSON 数组", '[{"name":"JSON 格式化","count":1},{"name":"Base64 编解码","count":2}]', "CSV")),
+    text("JSON 数组", '[{"name":"JSON 格式化","count":1},{"name":"Base64 编解码","count":2}]', "CSV", [], [["run", null]], ["text", "tree", "table"], "in")),
   T("csv-to-json", "CSV 转 JSON", "[]", "format", "把 CSV 转成对象数组，支持双引号包裹和转义。", "CSV JSON", "csv json 转换 表格",
-    text("CSV", "name,count\n快捷键,3056\n命令,778", "JSON")),
-  T("json-to-typescript", "JSON 转 TypeScript", "TS", "format", "从 JSON 推断 TypeScript 接口，合并同名字段类型。", "TypeScript 类型", "json typescript 类型 接口 interface",
-    text("JSON", '{"site":"zuhejian.com","tools":105}', "TypeScript", [{ k: "input", key: "root", label: "根类型名", value: "Root" }])),
-  T("json-to-go", "JSON 转 Go", "Go", "format", "从 JSON 生成 Go 结构体，带 json tag。", "Go 结构体", "json go golang 结构体 struct",
-    text("JSON", '{"site":"zuhejian.com","tools":105}', "Go", [{ k: "input", key: "root", label: "根类型名", value: "Root" }])),
+    text("CSV", "name,count\n快捷键,3056\n命令,778", "JSON", [], [["run", null]], ["text", "tree", "table"], "out")),
+  T("json-to-typescript", "JSON 转 TypeScript", "TS", "format", "从 JSON 推断 TypeScript 类型，可选 interface 或 type 写法。", "TypeScript 类型", "json typescript 类型 接口 interface type",
+    text("JSON", '{"site":"zuhejian.com","tools":105,"categories":["格式化","编码","颜色"]}', "TypeScript", [
+      { k: "input", key: "root", label: "根类型名", value: "Root" },
+      { k: "select", key: "shape", label: "输出", options: ["interface", "type"], value: "interface" }
+    ], [["run", null]], ["text", "tree", "table"], "in")),
+  T("json-to-go", "JSON 转 Go", "Go", "format", "从 JSON 生成 Go 结构体，带 json tag，可选 omitempty 与内联嵌套。", "Go 结构体", "json go golang 结构体 struct omitempty",
+    text("JSON", '{"site":"zuhejian.com","tools":105,"categories":["格式化","编码","颜色"]}', "Go", [
+      { k: "input", key: "root", label: "根结构体名", value: "Root" },
+      { k: "checkbox", key: "omitempty", label: "omitempty 标签" },
+      { k: "checkbox", key: "inline", label: "内联嵌套结构体" }
+    ], [["run", null]], ["text", "tree", "table"], "in")),
   T("json-schema-builder", "JSON Schema 构建器", "schema", "ai", "搭字段、生成 JSON Schema，并导出 OpenAI、Anthropic、Gemini、Zod、Pydantic。", "JSON Schema", "json schema 推断 结构化 输出 函数调用 openai anthropic gemini zod pydantic",
     { k: "custom", panel: "schema" }),
   T("jsonl-validator", "JSONL 校验器", "jsonl", "format", "逐行校验 JSONL 微调数据，统计重复与 token，并拆分训练/验证集。", "JSONL 微调", "jsonl ndjson 校验 数据集 微调 openai anthropic 训练 验证 拆分 token",
     { k: "custom", panel: "jsonl" }),
   T("xml-formatter", "XML 格式化", "xml", "format", "用浏览器 DOMParser 校验并缩进 XML。", "XML 格式化", "xml 格式化 美化 校验",
     text("XML", "<site><name>快捷键大全</name><tools>105</tools></site>", "结果", [], [["format", "格式化"], ["minify", "压缩"]])),
-  T("xml-to-json", "XML ⇄ JSON 转换", "xml↔", "format", "把 XML 转成 JSON 结构，或把 JSON 还原为简单 XML。", "XML JSON", "xml json 转换",
-    text("XML 或 JSON", "<site><tools>105</tools></site>", "结果", [], [["toJson", "XML → JSON"], ["toXml", "JSON → XML"]])),
-  T("json-yaml", "JSON ⇄ YAML", "yaml", "format", "在 JSON 与 YAML 之间互转。", "YAML JSON", "json yaml 转换", text("JSON 或 YAML", "site: zuhejian.com", "结果", [], [["toYaml", "JSON → YAML"], ["toJson", "YAML → JSON"]]), ["yaml"]),
+  T("xml-to-json", "XML ⇄ JSON 转换", "xml↔", "format", "把 XML 转成 JSON 结构（可推断值类型），或把 JSON 还原为简单 XML。", "XML JSON", "xml json 转换 根元素 类型推断",
+    text("XML 或 JSON", "<site><tools>105</tools></site>", "结果", [
+      { k: "checkbox", key: "infer", label: "自动推断值类型", checked: true },
+      { k: "input", key: "rootEl", label: "根元素名", value: "root" }
+    ], [["toJson", "XML → JSON"], ["toXml", "JSON → XML"]])),
+  T("json-yaml", "JSON ⇄ YAML", "yaml", "format", "在 JSON 与 YAML 之间互转。", "YAML JSON", "json yaml 转换", text("JSON 或 YAML", "site: zuhejian.com", "结果", [], [["toYaml", "JSON → YAML"], ["toJson", "YAML → JSON"]], ["text", "tree", "table"], "in"), ["yaml"]),
   T("yaml-validator", "YAML 校验器", "yaml✓", "format", "校验 YAML 语法并输出 JSON 预览。", "YAML 校验", "yaml 校验 语法 错误",
     text("YAML", "site: zuhejian.com\ntools:\n  - JSON 格式化\n  - Base64 编解码", "结果", [], [["validate", "校验"]]), ["yaml"]),
   T("yaml-to-go", "YAML 转 Go", "yaml→", "format", "从 YAML 生成 Go 结构体。", "YAML Go", "yaml go 结构体 struct",
@@ -117,15 +128,18 @@ export const TOOLS = [
   T("har-file-viewer", "HAR 文件查看器", "HAR", "network", "读取 HTTP Archive，列出请求、状态码、耗时和体积。", "HAR 网络", "har 文件 查看 http archive 请求 分析", { k: "custom", panel: "har" }),
   T("jsonpath-tester", "JSONPath 测试器", "$..", "format", "用 JSONPath 表达式查询 JSON，列出命中值。", "JSONPath 查询", "jsonpath 查询 json 表达式", text("JSON", '{"site":{"tools":[{"id":"json-formatter"},{"id":"base64"}]}}', "命中结果", [
     { k: "input", key: "expr", label: "JSONPath", value: "$..id" }
-  ]), ["jsonpath"]),
-  T("html-minifier", "HTML 压缩", "html↓", "format", "压缩 HTML 空白和注释，减小页面体积。", "HTML 压缩", "html 压缩 minify 体积", text("HTML", "<article>  <h2> 快捷键大全 </h2> </article>", "结果")),
-  T("css-minifier", "CSS 压缩", "css↓", "format", "压缩 CSS 注释、空白和多余分号。", "CSS 压缩", "css 压缩 minify", text("CSS", ".tool-card { display: flex; gap: 12px; }", "结果")),
-  T("javascript-minifier", "JavaScript 压缩", "js↓", "format", "用 Terser 压缩 JavaScript（会改变变量名）。", "JS 压缩", "javascript js 压缩 minify terser", text("JavaScript", "function searchTools(q) { return tools.filter((t) => t.name.includes(q)); }", "结果"), ["terser"]),
+  ], [["run", null]], ["text", "tree", "table"], "both"), ["jsonpath"]),
+  T("html-minifier", "HTML 压缩", "html↓", "format", "压缩 HTML 空白和注释，也可反向重新格式化。", "HTML 压缩", "html 压缩 minify 体积 格式化",
+    text("HTML", "<article>  <h2> 快捷键大全 </h2> </article>", "结果", [], [["run", "压缩"], ["format", "重新格式化"]]), ["beautify"]),
+  T("css-minifier", "CSS 压缩", "css↓", "format", "压缩 CSS 注释、空白和多余分号，也可反向美化。", "CSS 压缩", "css 压缩 minify 美化",
+    text("CSS", ".tool-card { display: flex; gap: 12px; }", "结果", [], [["run", "压缩"], ["beautify", "美化"]]), ["beautify"]),
+  T("javascript-minifier", "JavaScript 压缩", "js↓", "format", "用 Terser 压缩 JavaScript（会改变变量名），也可反向美化。", "JS 压缩", "javascript js 压缩 minify terser 美化",
+    text("JavaScript", "function searchTools(q) { return tools.filter((t) => t.name.includes(q)); }", "结果", [], [["run", "压缩"], ["beautify", "美化"]]), ["terser", "beautify"]),
   T("iam-policy-explainer", "AWS IAM 策略解读器", "iam", "security", "把 IAM Policy JSON 展开为“谁在什么资源上能做什么”。", "IAM AWS", "iam policy aws 权限 解读 策略", text("IAM Policy JSON", '{"Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', "解读结果")),
   T("curl-converter", "curl 转代码", "curl", "network", "把 curl 命令转成 fetch、Python requests 或 Go。", "curl fetch", "curl 转换 fetch python go 代码", text("curl 命令", "curl -X POST https://api.example.com -H 'Content-Type: application/json' -d '{\"a\":1}'", "代码", [
     { k: "select", key: "target", label: "目标语言", options: ["fetch", "Python requests", "Go"], value: "fetch" }
   ])),
-  T("compression-comparison", "压缩比较", "gz", "format", "比较原始大小与 gzip / deflate 压缩后的大小。", "gzip 压缩", "压缩 gzip deflate brotli zstd 比较", { k: "custom", panel: "compression" }),
+  T("compression-comparison", "压缩比较", "gz", "format", "比较 gzip / Brotli / Zstd 在不同级别下的压缩效果，全部本地计算。", "gzip 压缩", "压缩 gzip deflate brotli zstd 比较", { k: "custom", panel: "compression" }, ["fflate", "brotli", "zstd"]),
 
   /* ---------- 文本 ---------- */
   T("case-converter", "命名规范转换", "Aa", "text", "在 camelCase、snake_case、kebab-case、PascalCase 之间转换。", "命名 camelCase", "命名 转换 camel snake kebab pascal constant", text("文本", "hotkey inspector", "结果", [

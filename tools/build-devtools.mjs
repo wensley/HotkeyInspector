@@ -29,7 +29,36 @@ const LIB_FILES = {
   terser: "vendor/terser.js",
   gifenc: "vendor/gifenc.js",
   heic2any: "vendor/heic2any.js",
-  beautify: "vendor/beautify-bundle.js"
+  beautify: "vendor/beautify-bundle.js",
+  jsonrepair: "vendor/jsonrepair.js",
+  fflate: "vendor/fflate.js",
+  brotli: "vendor/brotli/brotli.js",
+  zstd: "vendor/zstd/zstd.js"
+};
+
+/* ESM 模块库需要用 type="module" 加载 */
+const ESM_LIBS = new Set(["brotli", "zstd"]);
+
+/* 第三方依赖的出处与许可证，用于在工具页如实标注 */
+const LIB_META = {
+  yaml: ["yaml", "ISC"],
+  sql: ["sql-formatter", "MIT"],
+  toml: ["iarna-toml", "ISC"],
+  qrcode: ["qrcode", "MIT"],
+  gifuct: ["gifuct-js", "MIT"],
+  mediabunny: ["mediabunny", "MPL-2.0"],
+  marked: ["marked", "MIT"],
+  purify: ["DOMPurify", "MPL-2.0"],
+  bcryptjs: ["bcryptjs", "BSD-3-Clause"],
+  jsonpath: ["jsonpath-plus", "MIT"],
+  terser: ["terser", "BSD-2-Clause"],
+  gifenc: ["gifenc", "MIT"],
+  heic2any: ["heic2any", "MIT"],
+  beautify: ["js-beautify", "MIT"],
+  jsonrepair: ["jsonrepair", "ISC"],
+  fflate: ["fflate", "MIT"],
+  brotli: ["brotli-wasm", "Apache-2.0"],
+  zstd: ["zstd-wasm", "MIT"]
 };
 
 const COMMAND_LINKS = {
@@ -68,7 +97,7 @@ function head({ title, description, url, page, tool }) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; ${imgSrc} font-src 'self' data:; media-src 'self' blob:; ${connect}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; ${imgSrc} font-src 'self' data:; media-src 'self' blob:; ${connect}; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'; upgrade-insecure-requests">
   <title>${esc(title)} · 快捷键大全</title>
   <meta name="description" content="${attr(description)}">
   <meta name="robots" content="index, follow">
@@ -90,9 +119,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=40">
-${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=50" defer></script>
+  <link rel="stylesheet" href="tools.css?v=45">
+${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
+  <script src="tools.js?v=61" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -220,6 +249,10 @@ const SAMPLES = {
   "javascript-beautifier": "function searchTools(query){return tools.filter(t=>t.name.includes(query)).map(t=>t.id)}",
   "json-to-typescript": '{"site":"zuhejian.com","tools":105,"categories":["格式化","编码","颜色"]}',
   "json-to-go": '{"site":"zuhejian.com","tools":105,"categories":["格式化","编码","颜色"]}',
+  "html-minifier": '<article class="card">\n  <h2> 快捷键大全 </h2>\n\n  <!-- 顶部说明 -->\n  <p>  3056 条快捷键，全部本地运行。  </p>\n</article>',
+  "css-minifier": '.tool-card {\n  display: flex; /* 横向排列 */\n  gap: 12px;\n  padding: 18px 20px;\n}\n\n.tool-card:hover {\n  border-color: #111;\n}',
+  "javascript-minifier": '// 按关键词筛出命中的工具 id\nfunction searchTools(query) {\n  const hits = tools.filter((t) => t.name.includes(query));\n  return hits.map((t) => t.id);\n}',
+  "xml-to-json": '<site name="快捷键大全"><tools>105</tools><local>true</local><version>2.3.0</version></site>',
   "case-converter": "hotkey knowledge base zuhejian",
   "word-counter": "快捷键大全收录 3056 条快捷键、778 条命令和 105 个开发者工具。\n所有工具在浏览器本地运行，输入不会上传。",
   "remove-duplicate-lines": "Windows\nExcel\nWindows\nPhotoshop\nExcel\nChrome",
@@ -271,6 +304,51 @@ function actionLabel(tool) {
   return "运行";
 }
 
+/* JSONPath 速查表：点一下把片段插进表达式 */
+const JSONPATH_HELP = [
+  ["$", "根元素"],
+  ["[*]", "所有元素"],
+  ["..", "递归下降"],
+  ["[0:2]", "数组切片"],
+  ["[?(@.x)]", "过滤表达式"]
+];
+
+function jsonpathHelp() {
+  return `<div class="jp-cheats" role="group" aria-label="JSONPath 速查表">
+      ${JSONPATH_HELP.map(([code, desc]) => `<button class="jp-chip" type="button" data-jp="${attr(code)}"><code>${esc(code)}</code><span>${esc(desc)}</span></button>`).join("")}
+    </div>`;
+}
+
+/* 结果视图：文本 / 树形 / 表格。放在 JSON 所在的那一侧（viewsAt: in | out | both） */
+function viewsHere(tool, at) {
+  const where = tool.ui.viewsAt || "out";
+  return (where === at || where === "both") && (tool.ui.views || ["text"]).length > 1;
+}
+
+function viewsSeg(tool) {
+  const views = tool.ui.views || ["text"];
+  const btns = views.map((v, i) =>
+    `<button class="tw-seg-btn" type="button" data-view="${attr(v)}" aria-pressed="${i === 0}">${{ text: "文本", tree: "树形", table: "表格" }[v]}</button>`
+  ).join("");
+  return `<div class="tw-views tw-seg" role="group" aria-label="视图切换">${btns}</div>`;
+}
+
+function panesHtml(tool) {
+  const views = tool.ui.views || ["text"];
+  const panes = [];
+  if (views.includes("tree")) {
+    panes.push(`<div class="tw-tree" data-pane="tree" role="region" aria-label="树形视图" hidden>
+      <div class="tv-filter">
+        <input type="search" data-filter placeholder="筛选键或值…" aria-label="筛选树节点">
+        <button class="tw-btn tw-btn-ghost" type="button" data-filter-clear>移除筛选</button>
+      </div>
+      <div class="tv-body"></div>
+    </div>`);
+  }
+  if (views.includes("table")) panes.push(`<div class="tw-table" data-pane="table" role="region" aria-label="表格视图" hidden></div>`);
+  return panes.join("\n      ");
+}
+
 function textPanel(tool) {
   const ui = tool.ui;
   const opts = (ui.opts || []).length ? `<div class="tool-opts">${ui.opts.map(optHtml).join("")}</div>` : "";
@@ -278,21 +356,29 @@ function textPanel(tool) {
     `<button class="tw-btn${i === 0 ? " tw-btn-primary" : ""}" type="button" data-act="${attr(act)}">${esc(label || actionLabel(tool))}</button>`
   ).join("");
   const sample = SAMPLES[tool.id];
+  const inViews = viewsHere(tool, "in");
   // 不接收文本输入的工具（生成器、计算器）不放编辑器，避免空着的大文本框
-  const editor = ui.ph ? `<div class="tw-ed">
-      <textarea data-input rows="11" spellcheck="false" aria-label="${attr(ui.in || "输入")}" placeholder="${attr(ui.ph)}"></textarea>
-      <div class="tw-empty" data-empty>
-        <p>${esc(ui.ph)}</p>
-        ${sample ? '<button class="tw-sample" type="button" data-act="sample">载入示例</button>' : ""}
+  const editor = ui.ph ? `<div${inViews ? ' class="tw-ed tw-views-box" data-views="in"' : ' class="tw-ed"'}>
+      ${inViews ? `<div class="tw-out-label">${esc(ui.in || "输入")}${viewsSeg(tool)}</div>` : ""}
+      <div${inViews ? ' class="tw-ed-rel"' : ' style="display:contents"'}>
+        <textarea data-input rows="11" spellcheck="false" aria-label="${attr(ui.in || "输入")}" placeholder="${attr(ui.ph)}"></textarea>
+        <div class="tw-empty" data-empty>
+          <p>${esc(ui.ph)}</p>
+          ${sample ? '<button class="tw-sample" type="button" data-act="sample">载入示例</button>' : ""}
+        </div>
       </div>
+      ${inViews ? panesHtml(tool) : ""}
       ${sample ? `<template data-sample>${esc(sample)}</template>` : ""}
     </div>` : "";
+  const outViews = viewsHere(tool, "out");
   return `<section class="tool-work tw-card" data-panel="${attr(tool.id)}" data-handler="${attr(tool.id)}">
     ${opts}
+    ${tool.id === "jsonpath-tester" ? jsonpathHelp() : ""}
     ${editor}
-    <div class="tw-out">
-      <span class="tw-out-label">${esc(ui.out || "结果")}</span>
+    <div${outViews ? ' class="tw-out tw-views-box" data-views="out"' : ' class="tw-out"'}>
+      <span class="tw-out-label">${esc(ui.out || "结果")}${outViews ? viewsSeg(tool) : ""}</span>
       <textarea data-output rows="4" readonly spellcheck="false" aria-label="${esc(ui.out || "结果")}"></textarea>
+      ${outViews ? panesHtml(tool) : ""}
     </div>
     <div class="tool-extra" data-extra hidden></div>
     <footer class="tw-foot">
@@ -432,9 +518,13 @@ const PANELS = {
   compression: () => `<section class="tool-work" data-panel="compression-comparison" data-handler="compression-comparison">
     ${field("选择文件", `<input type="file" data-opt="file">`)}
     <div class="tool-field"><span>或输入文本</span><textarea data-input rows="6" spellcheck="false"></textarea></div>
-    <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">比较</button></div>
-    <p class="tool-status" data-status role="status" aria-live="polite">使用浏览器原生 CompressionStream 计算 gzip / deflate；Brotli、Zstd 暂不支持。</p>
-    <dl class="tool-dl" data-out></dl>
+    <div class="tool-grid tool-grid-2">
+      ${field("压缩级别", `<select data-opt="mode"><option value="fast" selected>最快</option><option value="min">最小</option><option value="custom">自定义</option></select>`)}
+      ${field("自定义级别", `<input type="number" data-opt="level" value="6" min="1" max="19" disabled>`)}
+    </div>
+    <p class="tool-status" data-status role="status" aria-live="polite">级别越高，压缩后体积越小，但速度越慢。范围：gzip 0–9，Brotli 1–11，Zstd 1–19。</p>
+    <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">压缩</button></div>
+    <div data-out></div>
   </section>`,
   diff: () => `<section class="tool-work" data-panel="diff-checker" data-handler="diff-checker">
     <div class="tool-grid tool-grid-2">
@@ -580,7 +670,7 @@ const PANELS = {
     <div class="meta-check" data-checklist></div>
     <p class="tool-status" data-status role="status" aria-live="polite"></p>
   </section>`,
-  timestamp: () => `<section class="tool-work" data-panel="timestamp-converter" data-handler="timestamp-converter">
+  timestamp: () => `<section class="tool-work" data-panel="timestamp-converter" data-handler="timestamp-converter" data-live="1">
     <div class="tool-row">
       ${field("Unix 时间戳（秒或毫秒）", `<input data-opt="ts" value="1793145600" inputmode="numeric" spellcheck="false">`)}
       ${field("日期时间（本地时区）", `<input type="datetime-local" data-opt="dt" step="1">`)}
@@ -773,7 +863,9 @@ const SWAP_PAIRS = [
   ["toYaml", "toJson"],
   ["toJson", "toToml"],
   ["md2html", "html2md"],
-  ["toBinary", "toText"]
+  ["toBinary", "toText"],
+  ["run", "format"],
+  ["run", "beautify"]
 ];
 
 /* 选项不超过 4 个的下拉改成一行分段按钮；只剩一个选项的直接去掉下拉 */
@@ -870,6 +962,14 @@ function enhancePanel(panel) {
 }
 
 
+/* 用到的第三方库要在页面上写清楚：库名、许可证、只在浏览器本地跑 */
+function libNoteHtml(tool) {
+  const libs = [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])].filter((l) => LIB_META[l]);
+  if (!libs.length) return "";
+  const items = libs.map((l) => `${LIB_META[l][0]}（${LIB_META[l][1]}）`).join("、");
+  return `<section class="tool-note"><h2>第三方依赖</h2><p>本工具使用开源库 ${items}，已随站点打包，全部在你的浏览器里运行，不会把输入发送到这些库的任何服务。</p></section>`;
+}
+
 function faqItems(tool) {
   const remote =
     tool.id === "file-drop"
@@ -938,6 +1038,7 @@ function toolPage(tool) {
             .replace(/(<section class="tool-work tw-card"[^>]*>)/, `$1\n          ${cardHead(tool)}`);
           return enhancePanel(panel);
         })()}
+        ${libNoteHtml(tool)}
         <section class="tool-note"><h2>使用提示</h2><p>${esc(GUIDE[tool.cat] || tool.desc)}</p></section>
       </div>
     </div>
