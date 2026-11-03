@@ -90,9 +90,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=38">
+  <link rel="stylesheet" href="tools.css?v=40">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=47" defer></script>
+  <script src="tools.js?v=48" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -347,11 +347,10 @@ const PANELS = {
       ${field("RGB", `<input data-opt="rgb" value="rgb(0, 114, 245)" spellcheck="false">`)}
       ${field("HSL", `<input data-opt="hsl" value="hsl(212, 100%, 48%)" spellcheck="false">`)}
     </div>
-    <div class="tool-swatch" data-swatch></div>
-    <div class="tool-grid tool-grid-2">
-      ${field("OKLCH", `<output class="tool-out" data-oklch>—</output>`)}
-      ${field("对比度（对白 / 对黑）", `<output class="tool-out" data-contrast>—</output>`)}
-    </div>
+    <dl class="kv-list">
+      <div class="kv-row"><dt>OKLCH</dt><dd data-oklch>—</dd></div>
+      <div class="kv-row"><dt>对比度</dt><dd data-contrast>—</dd></div>
+    </dl>
     <p class="tool-status" data-status role="status" aria-live="polite">修改任意输入即可联动。</p>
   </section>`,
   contrast: () => `<section class="tool-work" data-panel="color-contrast-checker" data-handler="color-contrast-checker">
@@ -360,10 +359,10 @@ const PANELS = {
       ${field("背景色", `<input type="color" data-opt="bg" value="#ffffff">`)}
     </div>
     <div class="tool-swatch" data-contrast-preview></div>
-    <div class="tool-grid tool-grid-2">
-      ${field("对比度", `<output class="tool-out" data-ratio>—</output>`)}
-      ${field("WCAG 结论", `<output class="tool-out" data-verdict>—</output>`)}
-    </div>
+    <dl class="kv-list">
+      <div class="kv-row"><dt>对比度</dt><dd data-ratio>—</dd></div>
+      <div class="kv-row"><dt>WCAG 结论</dt><dd data-verdict>—</dd></div>
+    </dl>
     <p class="tool-status" data-status role="status" aria-live="polite">按 WCAG 2.x 相对亮度计算。</p>
   </section>`,
   imageBase64: () => `<section class="tool-work" data-panel="image-to-base64" data-handler="image-to-base64">
@@ -586,12 +585,12 @@ const PANELS = {
       ${field("Unix 时间戳（秒或毫秒）", `<input data-opt="ts" value="1793145600" inputmode="numeric" spellcheck="false">`)}
       <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">转换</button><button class="cmd-btn" data-act="now">当前时间</button></div>
     </div>
-    <div class="tool-grid tool-grid-2">
-      ${field("本地时间", `<output class="tool-out" data-local>—</output>`)}
-      ${field("UTC", `<output class="tool-out" data-utc>—</output>`)}
-      ${field("ISO 8601", `<output class="tool-out" data-iso>—</output>`)}
-      ${field("相对现在", `<output class="tool-out" data-rel>—</output>`)}
-    </div>
+    <dl class="kv-list">
+      <div class="kv-row"><dt>本地时间</dt><dd data-local>—</dd></div>
+      <div class="kv-row"><dt>UTC</dt><dd data-utc>—</dd></div>
+      <div class="kv-row"><dt>ISO 8601</dt><dd data-iso>—</dd></div>
+      <div class="kv-row"><dt>相对现在</dt><dd data-rel>—</dd></div>
+    </dl>
     <p class="tool-status" data-status role="status" aria-live="polite">10 位按秒、13 位按毫秒；其他长度按位数推断。</p>
   </section>`,
   regex: () => `<section class="tool-work" data-panel="regex-tester" data-handler="regex-tester">
