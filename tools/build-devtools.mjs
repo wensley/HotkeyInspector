@@ -90,7 +90,7 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=35">
+  <link rel="stylesheet" href="tools.css?v=38">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
   <script src="tools.js?v=47" defer></script>
   <script src="../version.js?v=2" defer></script>
@@ -596,8 +596,8 @@ const PANELS = {
   </section>`,
   regex: () => `<section class="tool-work" data-panel="regex-tester" data-handler="regex-tester">
     <div class="tool-row">
-      ${field("正则表达式", `<input data-opt="pattern" value="https?://[\\w.-]+\\.\\w{2,}" spellcheck="false">`)}
-      ${field("Flags", `<input data-opt="flags" value="gi" maxlength="6" spellcheck="false">`)}
+      <div class="tool-field is-wide"><span>正则表达式</span><input data-opt="pattern" value="https?://[\\w.-]+\\.\\w{2,}" spellcheck="false"></div>
+      <div class="tool-field is-sm"><span>Flags</span><input data-opt="flags" value="gi" maxlength="6" spellcheck="false"></div>
     </div>
     <div class="tool-field"><span>测试文本</span><textarea data-input rows="6" spellcheck="false">快捷键大全：https://zuhejian.com/
 开发者工具：https://zuhejian.com/tools/
@@ -808,6 +808,24 @@ function enhancePanel(panel) {
     );
   }
 
+  // 少量窄参数收进操作条，避免只剩一个数字框时被拉满整行；
+  // 参数多或含分段按钮时留在原位，否则会把操作条撑成好几行
+  let opts = "";
+  const optsMatch = panel.match(/<div class="tool-opts">/);
+  if (optsMatch) {
+    const start = optsMatch.index;
+    const end = findDivEnd(panel, start);
+    if (end > start) {
+      const block = panel.slice(start, end);
+      // 滑块也带 tool-field / tool-range，需要一起计数
+      const count = (block.match(/class="tool-field\b/g) || []).length;
+      if (count <= 3) {
+        opts = block;
+        panel = panel.slice(0, start) + panel.slice(end);
+      }
+    }
+  }
+
   // 把操作行从原来的位置摘出来
   const actionsMatch = panel.match(/<div class="(?:tool|tw)-actions">/);
   let actions = "";
@@ -841,7 +859,7 @@ function enhancePanel(panel) {
 
     const headEnd = findDivEnd(panel, panel.indexOf('<div class="tw-head"'));
     if (headEnd > 0) {
-      panel = panel.slice(0, headEnd) + `\n    <div class="tw-bar">${actions}</div>` + panel.slice(headEnd);
+      panel = panel.slice(0, headEnd) + `\n    <div class="tw-bar">${actions}${opts}</div>` + panel.slice(headEnd);
     }
   }
 
