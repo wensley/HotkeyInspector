@@ -198,11 +198,13 @@ export const TOOLS = [
 
   /* ---------- 安全 ---------- */
   T("hash-generator", "哈希生成器", "ƒ", "security", "用 Web Crypto 计算 SHA-1/256/384/512 摘要。", "Hash SHA", "哈希 hash sha256 摘要 校验", text("输入文本", "abc", "十六进制摘要", [
-    { k: "select", key: "algo", label: "算法", options: ["SHA-256", "SHA-1", "SHA-384", "SHA-512"], value: "SHA-256" }
+    { k: "select", key: "algo", label: "算法", options: ["SHA-256", "SHA-1", "SHA-384", "SHA-512"], value: "SHA-256" },
+    { k: "checkbox", key: "upper", label: "大写" }
   ])),
   T("hmac-generator", "HMAC 生成器", "hmac", "security", "用 Web Crypto 计算 HMAC 签名。", "HMAC 签名", "hmac 签名 sha256 密钥", text("消息", "message", "HMAC", [
     { k: "input", key: "key", label: "密钥", type: "password", ph: "secret" },
-    { k: "select", key: "algo", label: "算法", options: ["SHA-256", "SHA-1", "SHA-384", "SHA-512"], value: "SHA-256" }
+    { k: "select", key: "algo", label: "算法", options: ["SHA-256", "SHA-1", "SHA-384", "SHA-512"], value: "SHA-256" },
+    { k: "select", key: "encoding", label: "输出", options: ["Hex", "Base64"], value: "Hex" }
   ])),
   T("aes-encryption", "AES 加密", "aes", "security", "用密码派生密钥做 AES-GCM / AES-CBC 加密或解密，输出 Base64。", "AES 加密", "aes 加密 解密 gcm cbc pbkdf2 密码", { k: "custom", panel: "aes" }),
   T("jwt-decoder", "JWT 解码器", "jwt", "security", "解码 header 和 payload，不校验签名。", "JWT 解码", "jwt token 解码 header payload", { k: "custom", panel: "jwt" }),
@@ -214,6 +216,8 @@ export const TOOLS = [
     { k: "checkbox", key: "upper", label: "大写字母", checked: true },
     { k: "checkbox", key: "digits", label: "数字", checked: true },
     { k: "checkbox", key: "symbols", label: "符号", checked: true },
+    { k: "checkbox", key: "plain", label: "排除易混淆字符（Il1O0）", checked: true },
+    { k: "checkbox", key: "each", label: "每类至少一个", checked: true },
     { k: "number", key: "count", label: "生成数量", min: 1, max: 20, value: 3 }
   ], [["run", "生成"]])),
   T("token-generator", "令牌生成器", "tk", "security", "生成随机 token，可选 Base64URL、十六进制或 UUID。", "Token 随机", "token 令牌 随机 生成 base64 hex", text("生成选项", "", "结果", [
@@ -225,7 +229,8 @@ export const TOOLS = [
     { k: "number", key: "count", label: "数量", min: 1, max: 200, value: 5 },
     { k: "select", key: "version", label: "版本", options: ["v4", "v7"], value: "v4" },
     { k: "checkbox", key: "hyphen", label: "保留连字符", checked: true },
-    { k: "checkbox", key: "upper", label: "转为大写", checked: false }
+    { k: "checkbox", key: "upper", label: "转为大写", checked: false },
+    { k: "checkbox", key: "braces", label: "带引号" }
   ], [["run", "生成"]])),
   T("bcrypt-generator", "Bcrypt 生成器", "bc", "security", "生成 bcrypt 哈希或校验密码与哈希是否匹配。", "Bcrypt 密码", "bcrypt 哈希 校验 密码", text("密码或待校验内容", "password", "结果", [
     { k: "number", key: "rounds", label: "Cost", min: 4, max: 14, value: 10 },
