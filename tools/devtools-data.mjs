@@ -204,9 +204,7 @@ export const TOOLS = [
     { k: "input", key: "key", label: "密钥", type: "password", ph: "secret" },
     { k: "select", key: "algo", label: "算法", options: ["SHA-256", "SHA-1", "SHA-384", "SHA-512"], value: "SHA-256" }
   ])),
-  T("aes-encryption", "AES 加密", "aes", "security", "用 AES-GCM 基于密码加密或解密文本，输出 Base64。", "AES GCM 加密", "aes 加密 解密 gcm 密码", text("明文或密文", "要加密的文本", "结果", [
-    { k: "input", key: "password", label: "密码", type: "password", ph: "至少 8 位" }
-  ], [["encrypt", "加密"], ["decrypt", "解密"]])),
+  T("aes-encryption", "AES 加密", "aes", "security", "用密码派生密钥做 AES-GCM / AES-CBC 加密或解密，输出 Base64。", "AES 加密", "aes 加密 解密 gcm cbc pbkdf2 密码", { k: "custom", panel: "aes" }),
   T("jwt-decoder", "JWT 解码器", "jwt", "security", "解码 header 和 payload，不校验签名。", "JWT 解码", "jwt token 解码 header payload", { k: "custom", panel: "jwt" }),
   T("jwt-generator", "JWT 生成器", "jwt+", "security", "用 HS256 签发 JSON Web Token，适合本地调试。", "JWT 签发", "jwt 生成 签发 hs256 token", text("Payload（JSON）", '{"sub":"123"}', "JWT", [
     { k: "input", key: "secret", label: "密钥", type: "password", ph: "secret" }

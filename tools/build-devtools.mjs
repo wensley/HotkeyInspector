@@ -119,9 +119,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=46">
+  <link rel="stylesheet" href="tools.css?v=51">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=68" defer></script>
+  <script src="tools.js?v=73" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -433,6 +433,7 @@ const PANELS = {
       ${field("RGB", `<input data-opt="rgb" value="rgb(0, 114, 245)" spellcheck="false">`)}
       ${field("HSL", `<input data-opt="hsl" value="hsl(212, 100%, 48%)" spellcheck="false">`)}
     </div>
+    <div class="cp-swatch" data-swatch aria-label="颜色预览"></div>
     <dl class="kv-list">
       <div class="kv-row"><dt>OKLCH</dt><dd data-oklch>—</dd></div>
       <div class="kv-row"><dt>对比度</dt><dd data-contrast>—</dd></div>
@@ -444,11 +445,18 @@ const PANELS = {
       ${field("前景色", `<input type="color" data-opt="fg" value="#0072f5">`)}
       ${field("背景色", `<input type="color" data-opt="bg" value="#ffffff">`)}
     </div>
-    <div class="tool-swatch" data-contrast-preview></div>
+    <div class="tool-swatch" data-contrast-preview>
+      <p class="cc-preview-normal">常规文本（AA 需 4.5）——快捷键大全 HotkeyInspector</p>
+      <p class="cc-preview-large">大号文本（AA 需 3.0）——标题</p>
+    </div>
     <dl class="kv-list">
       <div class="kv-row"><dt>对比度</dt><dd data-ratio>—</dd></div>
-      <div class="kv-row"><dt>WCAG 结论</dt><dd data-verdict>—</dd></div>
+      <div class="kv-row"><dt>AA 常规</dt><dd data-aa>—</dd></div>
+      <div class="kv-row"><dt>AA 大号</dt><dd data-aa-large>—</dd></div>
+      <div class="kv-row"><dt>AAA 常规</dt><dd data-aaa>—</dd></div>
+      <div class="kv-row"><dt>AAA 大号</dt><dd data-aaa-large>—</dd></div>
     </dl>
+    <p data-verdict aria-live="polite"></p>
     <p class="tool-status" data-status role="status" aria-live="polite">按 WCAG 2.x 相对亮度计算。</p>
   </section>`,
   invisibleCleaner: () => `<section class="tool-work" data-panel="invisible-character-cleaner" data-handler="invisible-character-cleaner">
@@ -566,28 +574,39 @@ const PANELS = {
     <pre class="tool-pre" data-out></pre>
   </section>`,
   gradient: () => `<section class="tool-work" data-panel="css-gradient-generator" data-handler="css-gradient-generator">
-    <div class="tool-grid tool-grid-2">
-      ${field("类型", `<select data-opt="type"><option>linear</option><option>radial</option><option>conic</option></select>`)}
-      ${field("角度", `<input type="number" data-opt="angle" value="135" min="0" max="360">`)}
-      ${field("起始颜色", `<input type="color" data-opt="from" value="#0072f5">`)}
-      ${field("结束颜色", `<input type="color" data-opt="to" value="#7c3aed">`)}
+    <div class="tool-grid tool-grid-3">
+      ${field("渐变类型", `<select data-opt="type"><option value="linear">线性 linear</option><option value="radial">径向 radial</option><option value="conic">锥形 conic</option></select>`)}
+      ${field("角度 / 方向", `<input type="number" data-opt="angle" value="135" min="0" max="360" step="1">`)}
+      ${field("预设", `<select data-opt="preset"><option value="">自定义</option><option value="brand">品牌蓝紫</option><option value="sunset">日落</option><option value="forest">森林</option><option value="mono">灰阶</option><option value="mesh">三色网点</option></select>`)}
     </div>
+    <div class="cg-stops" data-stops></div>
+    <div class="tool-actions"><button class="cmd-btn" data-act="addStop">添加色标</button><button class="cmd-btn cmd-btn-primary" data-act="run">生成</button><button class="cmd-btn" data-act="copy">复制</button></div>
+    <p class="tool-status" data-status role="status" aria-live="polite">色标按位置从 0% 到 100% 排列，全部在本地计算。</p>
     <div class="tool-swatch tool-swatch-lg" data-preview></div>
-    <div class="tool-field"><span>CSS</span><textarea data-output rows="3" readonly></textarea></div>
-    <div class="tool-actions"><button class="cmd-btn" data-act="copy">复制</button></div>
+    <div class="tool-field"><span>CSS</span><textarea data-output rows="3" readonly spellcheck="false"></textarea></div>
   </section>`,
   shadow: () => `<section class="tool-work" data-panel="box-shadow-generator" data-handler="box-shadow-generator">
-    <div class="tool-opts">
-      ${rangeRow("x", "X 偏移", -50, 50, 0)}
-      ${rangeRow("y", "Y 偏移", -50, 50, 12)}
-      ${rangeRow("blur", "模糊", 0, 100, 24)}
-      ${rangeRow("spread", "扩散", -50, 50, -8)}
-      ${field("颜色", `<input type="color" data-opt="color" value="#000000">`)}
-      ${field("不透明度", `<input type="number" data-opt="alpha" min="0" max="1" step="0.05" value="0.2">`)}
+    <div class="tool-row">
+      <div class="tool-field is-sm"><span>选择预设</span><select data-opt="preset"><option value="">选择预设</option><option value="soft">柔和卡片</option><option value="lift">抬升</option><option value="float">悬浮</option><option value="inner">内辉光</option><option value="hard">硬边偏移</option></select></div>
     </div>
+    <div class="bs-layers" data-layers>
+      <div class="bs-layer" data-layer data-bl="[{&quot;x&quot;:0,&quot;y&quot;:4,&quot;blur&quot;:12,&quot;spread&quot;:-2,&quot;color&quot;:&quot;#0f172a&quot;,&quot;alpha&quot;:0.08,&quot;inset&quot;:false}]">
+        <div class="bs-layer-head"><b class="bs-layer-title">图层 1</b><button class="tw-icon" type="button" data-act="removeLayer" title="删除本层" aria-label="删除本层">&#10005;</button></div>
+        <div class="bs-grid">
+          <label class="bs-num"><span>X 偏移</span><input type="number" data-lopt="x" value="0" step="1"></label>
+          <label class="bs-num"><span>Y 偏移</span><input type="number" data-lopt="y" value="4" step="1"></label>
+          <label class="bs-num"><span>模糊</span><input type="number" data-lopt="blur" value="12" step="1" min="0"></label>
+          <label class="bs-num"><span>扩展</span><input type="number" data-lopt="spread" value="-2" step="1"></label>
+          <label class="bs-num"><span>颜色</span><input type="color" data-lopt="color" value="#0f172a"></label>
+          <label class="bs-num"><span>不透明度</span><input type="number" data-lopt="alpha" value="0.08" min="0" max="1" step="0.01"></label>
+        </div>
+        <label class="tool-check"><input type="checkbox" data-lopt="inset"> 内阴影</label>
+      </div>
+    </div>
+    <div class="tool-actions"><button class="cmd-btn" data-act="addLayer">添加图层</button><button class="cmd-btn cmd-btn-primary" data-act="run">生成</button><button class="cmd-btn" data-act="copy">复制</button></div>
+    <p class="tool-status" data-status role="status" aria-live="polite">多层阴影按顺序叠加，全部在本地计算。</p>
     <div class="tool-shadow-stage"><div class="tool-shadow-box" data-preview></div></div>
-    <div class="tool-field"><span>CSS</span><textarea data-output rows="3" readonly></textarea></div>
-    <div class="tool-actions"><button class="cmd-btn" data-act="copy">复制</button></div>
+    <div class="tool-field"><span>CSS</span><textarea data-output rows="3" readonly spellcheck="false"></textarea></div>
   </section>`,
   chmod: () => `<section class="tool-work" data-panel="chmod-calculator" data-handler="chmod-calculator">
     <div class="tool-grid tool-grid-2">
@@ -597,6 +616,17 @@ const PANELS = {
     <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">换算</button></div>
     <p class="tool-status" data-status role="status" aria-live="polite">支持 3 位和 4 位（含 setuid/setgid/sticky）。</p>
     <dl class="tool-dl" data-out></dl>
+  </section>`,
+  aes: () => `<section class="tool-work" data-panel="aes-encryption" data-handler="aes-encryption">
+    <div class="tool-grid tool-grid-2">
+      ${field("密码算法", `<select data-opt="cipher"><option value="AES-GCM">AES-GCM</option><option value="AES-CBC">AES-CBC</option></select>`)}
+      ${field("密钥长度", `<select data-opt="bits"><option value="256">256</option><option value="128">128</option><option value="192">192</option></select>`)}
+    </div>
+    <div class="tool-field"><span>密码短语</span><input type="password" data-opt="password" value="hotkey-inspector" placeholder="至少 8 位，用于 PBKDF2 派生"></div>
+    <div class="tool-field"><span>明文 / 密文（Base64）</span><textarea data-input rows="6" spellcheck="false"></textarea></div>
+    <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="encrypt">加密</button><button class="cmd-btn" data-act="decrypt">解密</button><button class="cmd-btn" data-act="copy">复制</button><button class="cmd-btn" data-act="clear">清除</button></div>
+    <p class="tool-status" data-status role="status" aria-live="polite">密钥用 PBKDF2（12 万次迭代，SHA-256）从密码短语派生；密文里带盐和 IV，可在本机解回。</p>
+    <div class="tool-field"><span>结果（Base64）</span><textarea data-output rows="5" readonly spellcheck="false"></textarea></div>
   </section>`,
   jwt: () => `<section class="tool-work" data-panel="jwt-decoder" data-handler="jwt-decoder">
     <div class="tool-field"><span>JWT</span><textarea data-input rows="4" spellcheck="false" placeholder="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.sig"></textarea></div>
