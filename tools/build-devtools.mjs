@@ -119,9 +119,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=45">
+  <link rel="stylesheet" href="tools.css?v=46">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=61" defer></script>
+  <script src="tools.js?v=68" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -451,11 +451,31 @@ const PANELS = {
     </dl>
     <p class="tool-status" data-status role="status" aria-live="polite">按 WCAG 2.x 相对亮度计算。</p>
   </section>`,
+  invisibleCleaner: () => `<section class="tool-work" data-panel="invisible-character-cleaner" data-handler="invisible-character-cleaner">
+    <div class="ic-cats" role="group" aria-label="要清理的类别">
+      ${[["zw", "零宽", true], ["bidi", "双向控制字符", true], ["tag", "标签字符", true], ["ctrl", "控制字符", true], ["space", "空格和 NBSP", false], ["homo", "同形字符", false]].map(function (c) {
+        return '<label class="ic-cat"><input type="checkbox" data-cat="' + c[0] + '"' + (c[2] ? " checked" : "") + '> <span>' + c[1] + '</span><b data-count="' + c[0] + '" hidden></b></label>';
+      }).join("")}
+    </div>
+    <div class="tool-field"><span>您的文本</span><textarea data-input rows="5" spellcheck="false" placeholder="粘贴可能含有零宽字符、方向控制符或异常空白的文本"></textarea></div>
+    <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">清理</button><button class="cmd-btn" data-act="clear">清除</button></div>
+    <p class="tool-status" data-status role="status" aria-live="polite">「零宽 / 双向 / 标签 / 控制」类别会删除字符；「空格和 NBSP / 同形字符」只做规范化替换，默认关闭以保护合法文本。</p>
+    <div data-highlight-wrap hidden>
+      <div class="tool-field"><span>高亮显示的输入</span><pre class="tool-pre ic-highlight" data-highlight></pre></div>
+    </div>
+    <div data-table-wrap hidden>
+      <div class="tool-field"><span>可疑字符</span><div class="tv-tablewrap"><table class="tv-table ic-table"><thead><tr><th>码位</th><th>名称</th><th>类别</th><th>位置</th></tr></thead><tbody data-tbody></tbody></table></div></div>
+    </div>
+    <div class="tool-field" data-clean-wrap hidden><span>清理后文本</span><textarea data-output rows="5" readonly spellcheck="false"></textarea></div>
+    <div class="tool-actions" data-clean-actions hidden><button class="cmd-btn" data-act="copy">复制清理结果</button></div>
+  </section>`,
   imageBase64: () => `<section class="tool-work" data-panel="image-to-base64" data-handler="image-to-base64">
     ${field("选择图片", `<input type="file" data-opt="file" accept="image/*">`)}
-    <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">转成 Base64</button><button class="cmd-btn" data-act="copy">复制</button><button class="cmd-btn" data-act="download">下载图片</button></div>
-    <p class="tool-status" data-status role="status" aria-live="polite">图片不会上传，data URI 可直接用于 CSS 或 HTML。</p>
+    <div class="tool-field"><span>Base64 或数据 URI</span><textarea data-opt="b64" rows="4" spellcheck="false" placeholder="粘贴 data:image/png;base64,… 或纯 Base64 串"></textarea></div>
+    <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">图片 → Base64</button><button class="cmd-btn" data-act="toImage">Base64 → 图片</button><button class="cmd-btn" data-act="copy">复制</button><button class="cmd-btn" data-act="download">下载图片</button></div>
+    <p class="tool-status" data-status role="status" aria-live="polite">图片不会上传，data URI 可直接用于 CSS 或 HTML；数据 URI 约有 33% 的体积开销。</p>
     <div class="tool-field"><span>data URI</span><textarea data-output rows="5" readonly spellcheck="false"></textarea></div>
+    <dl class="kv-list" data-details hidden></dl>
     <div class="tool-preview" data-preview></div>
   </section>`,
   binaryTranslator: () => `<section class="tool-work" data-panel="binary-translator" data-handler="binary-translator">
@@ -465,15 +485,21 @@ const PANELS = {
     <div class="tool-field"><span>二进制</span><textarea data-output rows="6" spellcheck="false"></textarea></div>
     <div class="tool-extra" data-extra hidden></div>
   </section>`,
+  caseConverter: () => `<section class="tool-work" data-panel="case-converter" data-handler="case-converter">
+    ${field("输入文本", `<textarea data-input rows="4" spellcheck="false" placeholder="hotkey inspector tool"></textarea>`)}
+    <p class="tool-status" data-status role="status" aria-live="polite">一次给出 11 种命名风格，点「复制」按需取用。</p>
+    <div data-out></div>
+  </section>`,
   binaryCalc: () => `<section class="tool-work" data-panel="binary-calculator" data-handler="binary-calculator">
     <div class="tool-grid tool-grid-2">
       ${field("操作数 A", `<input data-opt="a" value="1010" spellcheck="false">`)}
       ${field("操作数 B", `<input data-opt="b" value="110" spellcheck="false">`)}
       ${field("输入进制", `<select data-opt="base"><option value="2">二进制</option><option value="10">十进制</option><option value="16">十六进制</option></select>`)}
       ${field("运算", `<select data-opt="op"><option>+</option><option>-</option><option>&amp;</option><option>|</option><option>^</option><option>&lt;&lt;</option><option>&gt;&gt;</option></select>`)}
+      ${field("位宽", `<select data-opt="width"><option value="8">8</option><option value="16">16</option><option value="32" selected>32</option><option value="64">64</option></select>`)}
     </div>
     <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">计算</button></div>
-    <p class="tool-status" data-status role="status" aria-live="polite">按 32 位有符号整数计算。</p>
+    <p class="tool-status" data-status role="status" aria-live="polite">结果按所选位宽截断，并按二进制补码解读为有符号数。</p>
     <dl class="tool-dl" data-out></dl>
   </section>`,
   markdown: () => `<section class="tool-work" data-panel="markdown-html" data-handler="markdown-html">
@@ -530,6 +556,10 @@ const PANELS = {
     <div class="tool-grid tool-grid-2">
       ${field("原文本", `<textarea data-opt="left" rows="6" spellcheck="false"></textarea>`)}
       ${field("新文本", `<textarea data-opt="right" rows="6" spellcheck="false"></textarea>`)}
+    </div>
+    <div class="tool-opts">
+      <label class="tool-check"><input type="checkbox" data-opt="nocase"> 忽略大小写</label>
+      <label class="tool-check"><input type="checkbox" data-opt="ws"> 忽略行尾空白</label>
     </div>
     <div class="tool-actions"><button class="cmd-btn cmd-btn-primary" data-act="run">比较</button></div>
     <p class="tool-status" data-status role="status" aria-live="polite">逐行比较，绿色为新增，红色为删除。</p>

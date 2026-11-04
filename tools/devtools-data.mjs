@@ -49,33 +49,53 @@ export const TOOLS = [
   /* ---------- 编码 ---------- */
   T("base64", "Base64 编解码", "b64", "encode", "按 UTF-8 编码或解码文本，支持中文和 emoji。", "Base64 UTF-8", "base64 编码 解码 utf8 中文",
     text("输入文本", "快捷键大全 zuhejian.com", "结果", [], [["encode", "编码"], ["decode", "解码"]])),
-  T("url-encoder", "URL 编解码", "%20", "encode", "编码或解码 URL 组件与整段 URL。", "URL 编码", "url 编码 解码 encodeuricomponent 转义",
+  T("url-encoder", "URL 编解码", "%20", "encode", "编码或解码 URL 组件与整段 URL，支持表单风格的 + 空格。", "URL 编码", "url 编码 解码 encodeuricomponent 转义 form 表单",
     text("输入 URL 或参数", "https://zuhejian.com/搜索?q=命令 大全", "结果", [
-      { k: "select", key: "mode", label: "范围", options: ["组件（encodeURIComponent）", "整段 URL（encodeURI）"], value: "组件（encodeURIComponent）" }
+      { k: "select", key: "mode", label: "范围", options: ["组件（encodeURIComponent）", "整段 URL（encodeURI）"], value: "组件（encodeURIComponent）" },
+      { k: "checkbox", key: "plus", label: "+ 作为空格" }
     ], [["encode", "编码"], ["decode", "解码"]])),
-  T("html-entities", "HTML 实体编解码", "&lt;", "encode", "转义 < > & 等字符，或把实体还原为文本。", "HTML 转义", "html 实体 转义 编码 解码 xss",
-    text("输入文本或实体", '<a href="https://zuhejian.com/tools/">开发者工具</a>', "结果", [], [["encode", "编码"], ["decode", "解码"]])),
-  T("json-escape", "JSON 转义 / 反转义", "\\n", "encode", "把文本转成可放进 JSON 字符串的转义形式，或反向还原。", "JSON 转义", "json 转义 escape 字符串 换行",
-    text("输入文本", '快捷键 "大全" 与 zuhejian.com', "结果", [], [["encode", "转义"], ["decode", "反转义"]])),
+  T("html-entities", "HTML 实体编解码", "&lt;", "encode", "转义 < > & 等字符（可选命名 / 十进制 / 十六进制实体），或把实体还原为文本。", "HTML 转义", "html 实体 转义 编码 解码 xss 命名实体",
+    text("输入文本或实体", '<a href="https://zuhejian.com/tools/">开发者工具</a> & 快捷键', "结果", [
+      { k: "select", key: "fmt", label: "输出格式", options: ["命名", "十进制", "Hex"], value: "命名" },
+      { k: "checkbox", key: "all", label: "所有非 ASCII 字符" }
+    ], [["encode", "编码"], ["decode", "解码"]])),
+  T("json-escape", "JSON 转义 / 反转义", "\\n", "encode", "把文本转成可放进 JSON 字符串的转义形式（可带外层引号），或反向还原。", "JSON 转义", "json 转义 escape 字符串 换行 引号",
+    text("输入文本", '快捷键 "大全" 与 zuhejian.com', "结果", [
+      { k: "checkbox", key: "quote", label: "用引号包裹" }
+    ], [["encode", "转义"], ["decode", "反转义"]])),
   T("image-to-base64", "图片转 Base64", "img", "encode", "把图片转成 data URI，或从 data URI 还原下载。", "Base64 图片", "图片 base64 data uri 转换", { k: "custom", panel: "imageBase64" }),
   T("binary-translator", "二进制转换器", "01", "encode", "在文本与二进制之间互转，并附带进制换算。", "二进制 文本", "二进制 转换 文本 ascii utf8", { k: "custom", panel: "binaryTranslator" }),
-  T("binary-to-decimal", "二进制转十进制", "2→10", "number", "把二进制数转换为十进制。", "二进制 十进制", "二进制 十进制 转换",
-    text("二进制数", "1100100", "十进制", [], [["run", "转换"]])),
-  T("decimal-to-binary", "十进制转二进制", "10→2", "number", "把十进制数转换为二进制。", "十进制 二进制", "十进制 二进制 转换",
-    text("十进制数", "100", "二进制")),
+  T("binary-to-decimal", "二进制转十进制", "2→10", "number", "把二进制数转换为十进制，支持按位宽做二进制补码解读。", "二进制 十进制", "二进制 十进制 转换 补码 位宽",
+    text("二进制数", "1100100", "十进制", [
+      { k: "select", key: "sign", label: "解释方式", options: ["无符号", "有符号（二进制补码）"], value: "无符号" },
+      { k: "select", key: "width", label: "位宽", options: ["8", "16", "32", "64"], value: "8" }
+    ], [["run", "转换"]])),
+  T("decimal-to-binary", "十进制转二进制", "10→2", "number", "把十进制数转换为二进制，可指定位宽并按半字节分组。", "十进制 二进制", "十进制 二进制 转换 位宽 补码",
+    text("十进制数", "100", "二进制", [
+      { k: "select", key: "width", label: "位宽", options: ["自动", "8", "16", "32"], value: "自动" },
+      { k: "checkbox", key: "nibble", label: "按半字节分组", checked: true }
+    ])),
   T("hex-to-decimal", "十六进制转十进制", "16→10", "number", "把十六进制转换为十进制。", "十六进制 十进制", "十六进制 十进制 转换",
     text("十六进制数", "ff", "十进制")),
-  T("decimal-to-hex", "十进制转十六进制", "10→16", "number", "把十进制转换为十六进制。", "十进制 十六进制", "十进制 十六进制 转换",
-    text("十进制数", "255", "十六进制")),
-  T("binary-to-text", "二进制转文本", "01→A", "number", "把二进制解码为 ASCII 或 UTF-8 文本。", "二进制 文本", "二进制 文本 ascii utf8 解码",
-    text("二进制", "01001000 01101001", "文本")),
+  T("decimal-to-hex", "十进制转十六进制", "10→16", "number", "把十进制转换为十六进制，可加 0x 前缀、大写、补齐整字节。", "十进制 十六进制", "十进制 十六进制 转换 前缀 大写",
+    text("十进制数", "255", "十六进制", [
+      { k: "checkbox", key: "prefix", label: "0x 前缀" },
+      { k: "checkbox", key: "upper", label: "大写", checked: true },
+      { k: "checkbox", key: "pad", label: "补齐为整字节", checked: true }
+    ])),
+  T("binary-to-text", "二进制转文本", "01→A", "number", "把二进制按 UTF-8 或 ASCII 解码为文本。", "二进制 文本", "二进制 文本 ascii utf8 解码",
+    text("二进制", "01001000 01101001", "文本", [
+      { k: "select", key: "mode", label: "编码", options: ["UTF-8", "ASCII"], value: "UTF-8" }
+    ])),
   T("text-to-binary", "文本转二进制", "A→01", "number", "把文本按 ASCII 或 UTF-8 转为二进制。", "文本 二进制", "文本 二进制 ascii utf8 编码",
     text("文本", "Hi", "二进制", [
       { k: "select", key: "mode", label: "编码", options: ["UTF-8", "ASCII"], value: "UTF-8" },
       { k: "checkbox", key: "space", label: "每字节加空格", checked: true }
     ])),
-  T("hex-to-binary", "十六进制转二进制", "16→2", "number", "把十六进制逐位展开为二进制半字节。", "十六进制 二进制", "十六进制 二进制 转换",
-    text("十六进制", "f0a", "二进制")),
+  T("hex-to-binary", "十六进制转二进制", "16→2", "number", "把十六进制逐位展开为二进制半字节，可加分组空格。", "十六进制 二进制", "十六进制 二进制 转换 分组",
+    text("十六进制", "f0a", "二进制", [
+      { k: "checkbox", key: "nibble", label: "按半字节分组", checked: true }
+    ])),
   T("octal-to-decimal", "八进制转十进制", "8→10", "number", "把八进制数转换为十进制。", "八进制 十进制", "八进制 十进制 转换",
     text("八进制数", "755", "十进制")),
   T("binary-calculator", "二进制计算器", "+", "number", "对两个数做加减和按位与、或、异或、移位。", "二进制 按位", "二进制 计算 按位 and or xor 移位", { k: "custom", panel: "binaryCalc" }),
@@ -142,28 +162,28 @@ export const TOOLS = [
   T("compression-comparison", "压缩比较", "gz", "format", "比较 gzip / Brotli / Zstd 在不同级别下的压缩效果，全部本地计算。", "gzip 压缩", "压缩 gzip deflate brotli zstd 比较", { k: "custom", panel: "compression" }, ["fflate", "brotli", "zstd"]),
 
   /* ---------- 文本 ---------- */
-  T("case-converter", "命名规范转换", "Aa", "text", "在 camelCase、snake_case、kebab-case、PascalCase 之间转换。", "命名 camelCase", "命名 转换 camel snake kebab pascal constant", text("文本", "hotkey inspector", "结果", [
-    { k: "select", key: "target", label: "目标风格", options: ["camelCase", "PascalCase", "snake_case", "kebab-case", "CONSTANT_CASE", "Title Case"], value: "camelCase" }
-  ])),
+  T("case-converter", "命名规范转换", "Aa", "text", "一次给出 camelCase、snake_case、kebab-case 等 11 种命名风格。", "命名 camelCase", "命名 转换 camel snake kebab pascal constant title sentence",
+    { k: "custom", panel: "caseConverter" }),
   T("word-counter", "字数统计", "123", "text", "统计字符、单词、行数、段落和阅读时间。", "字数 统计", "字数 统计 字符 单词 行数 阅读时间", text("文本", "粘贴要统计的文本", "统计结果")),
   T("diff-checker", "差异比较", "±", "text", "逐行比较高亮新增、删除和修改。", "Diff 差异", "diff 差异 比较 文本 高亮", { k: "custom", panel: "diff" }),
-  T("lorem-ipsum-generator", "Lorem Ipsum 生成器", "lorem", "text", "生成指定段落数的占位文本。", "占位文本", "lorem ipsum 占位 假文 生成", text("设置", "", "结果", [
-    { k: "number", key: "paragraphs", label: "段落数", min: 1, max: 20, value: 3 },
-    { k: "checkbox", key: "classic", label: "以 Lorem ipsum 开头", checked: true }
+  T("lorem-ipsum-generator", "Lorem Ipsum 生成器", "lorem", "text", "按段落、句子或单词生成占位文本，可输出纯文本或 HTML。", "占位文本", "lorem ipsum 占位 假文 生成 html", text("设置", "", "结果", [
+    { k: "number", key: "count", label: "数量", min: 1, max: 100, value: 3 },
+    { k: "select", key: "unit", label: "单位", options: ["段落", "句子", "单词"], value: "段落" },
+    { k: "checkbox", key: "classic", label: "以 Lorem ipsum 开头", checked: true },
+    { k: "checkbox", key: "html", label: "HTML 段落", checked: false }
   ], [["run", "生成"]])),
   T("remove-duplicate-lines", "删除重复行", "uniq", "text", "去除重复行，可保留首次或末次出现。", "去重 行", "重复行 去重 uniq 文本", text("文本", "每行一条", "结果", [
     { k: "select", key: "keep", label: "保留", options: ["首次出现", "末次出现"], value: "首次出现" },
     { k: "checkbox", key: "trim", label: "忽略首尾空格", checked: true },
     { k: "checkbox", key: "case", label: "忽略大小写", checked: false }
   ])),
-  T("sort-text", "文本行排序", "az", "text", "按字母、数字、长度排序，可去重和反转。", "排序 行", "文本 排序 行 字母 数字 长度", text("文本", "每行一条", "结果", [
+  T("sort-text", "文本行排序", "az", "text", "按字母、数字、长度排序，可忽略大小写、去重和反转。", "排序 行", "文本 排序 行 字母 数字 长度 去重", text("文本", "每行一条", "结果", [
     { k: "select", key: "mode", label: "方式", options: ["字母升序", "字母降序", "数字升序", "数字降序", "长度升序", "长度降序"], value: "字母升序" },
+    { k: "checkbox", key: "nocase", label: "忽略大小写", checked: true },
     { k: "checkbox", key: "unique", label: "去重", checked: false },
     { k: "checkbox", key: "reverse", label: "反转结果", checked: false }
   ])),
-  T("invisible-character-cleaner", "隐形字符清理器", "👻", "text", "检测并删除零宽字符、方向控制符和异常空白。", "隐形字符 Unicode", "隐形字符 零宽 unicode 清理 提示词注入", text("文本", "粘贴含可疑字符的文本", "清理结果", [
-    { k: "checkbox", key: "report", label: "显示检测报告", checked: true }
-  ])),
+  T("invisible-character-cleaner", "隐形字符清理器", "👻", "text", "按类别检测零宽字符、方向控制符、标签字符和异常空白，高亮可疑字符并一键清理。", "隐形字符 Unicode", "隐形字符 零宽 unicode 清理 提示词注入 bidi", { k: "custom", panel: "invisibleCleaner" }),
   T("ascii-table", "ASCII 表", "A", "reference", "十进制、十六进制、八进制、二进制对照表。", "ASCII 表", "ascii 表 编码 十进制 十六进制", { k: "table", panel: "ascii" }),
   T("meta-tag-previewer", "Meta 标签预览器", "meta", "text", "解析 HTML 的 title、description 和 Open Graph，预览分享卡片。", "Meta OG", "meta 标签 预览 open graph seo 分享", { k: "custom", panel: "metaPreview" }, []),
 
