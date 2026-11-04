@@ -248,7 +248,7 @@ export const TOOLS = [
   T("cookie-parser", "Cookie 解析器", "cookie", "debug", "解析 Cookie 字符串或 Set-Cookie 头。", "Cookie 解析", "cookie 解析 set-cookie 属性", text("Cookie 字符串", "a=1; b=2; Path=/", "解析结果")),
   T("http-status-codes", "HTTP 状态码", "404", "reference", "按类别和关键词筛选状态码，附常见原因。", "HTTP 状态码", "http 状态码 200 404 500 502", { k: "table", panel: "http" }),
   T("subnet-calculator", "子网计算器", "/24", "network", "计算 IPv4 子网，支持网络地址、广播、主机数和掩码。", "IPv4 子网", "子网 计算 ipv4 掩码 cidr", { k: "custom", panel: "subnet" }),
-  T("cidr-calculator", "CIDR 计算器", "cidr", "network", "把 CIDR 展开为地址范围和可用主机数。", "CIDR", "cidr 计算 网段 范围", { k: "custom", panel: "subnet" }),
+  T("cidr-calculator", "CIDR 计算器", "cidr", "network", "把 CIDR 或 IPv4 地址展开为网络地址、广播地址、子网掩码和主机数。", "CIDR", "cidr 计算 网段 范围 子网", text("CIDR 或 IPv4 地址", "10.0.0.0/8", "规范化 CIDR")),
   T("webrtc-ice-test", "WebRTC ICE 测试", "ice", "network", "收集 ICE 候选，检查 STUN 是否可达。", "WebRTC ICE", "webrtc ice stun turn 候选 检测", { k: "custom", panel: "ice" }),
   T("webrtc-leak-test", "WebRTC 泄露测试", "leak", "network", "检查 WebRTC 是否暴露本地或公网 IP。", "WebRTC 泄露", "webrtc 泄露 ip vpn 检测", { k: "custom", panel: "ice" }),
 
