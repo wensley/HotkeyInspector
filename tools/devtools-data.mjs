@@ -244,7 +244,7 @@ export const TOOLS = [
     { k: "number", key: "count", label: "预览次数", min: 1, max: 10, value: 5 }
   ], [["run", "解析"]])),
   T("user-agent-parser", "User-Agent 解析器", "UA", "debug", "识别浏览器、内核、操作系统和设备类型。", "UA 解析", "user agent ua 浏览器 操作系统 设备", text("User-Agent", "Mozilla/5.0 ...", "解析结果", [], [["run", "解析"]])),
-  T("url-parser", "URL 解析器", "url", "debug", "拆分协议、主机、路径和查询参数，并转成 JSON。", "URL 解析", "url 解析 参数 query 拆分", text("URL", "https://zuhejian.com/search?q=cmd&page=2", "解析结果")),
+  T("url-parser", "URL 解析器", "url", "debug", "拆开协议、主机、端口、路径、查询参数与片段；查询参数支持文本、树形、表格、JSON 四种视图，重复键保留为数组，缺少协议方案会直接报错而不自动补全。", "URL 解析", "url 解析 参数 query 拆分 视图 json 表格", { k: "custom", panel: "url" }),
   T("cookie-parser", "Cookie 解析器", "cookie", "debug", "解析 Cookie 字符串或 Set-Cookie 头。", "Cookie 解析", "cookie 解析 set-cookie 属性", text("Cookie 字符串", "a=1; b=2; Path=/", "解析结果")),
   T("http-status-codes", "HTTP 状态码", "404", "reference", "按类别和关键词筛选状态码，附常见原因。", "HTTP 状态码", "http 状态码 200 404 500 502", { k: "table", panel: "http" }),
   T("subnet-calculator", "子网计算器", "/24", "network", "计算 IPv4 子网，支持网络地址、广播、主机数和掩码。", "IPv4 子网", "子网 计算 ipv4 掩码 cidr", { k: "custom", panel: "subnet" }),

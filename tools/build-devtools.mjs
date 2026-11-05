@@ -119,9 +119,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=52">
+  <link rel="stylesheet" href="tools.css?v=53">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=80" defer></script>
+  <script src="tools.js?v=81" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -426,6 +426,49 @@ function noticePanel(tool) {
 const rangeRow = (key, label, min, max, value, step = 1) => `<label class="tool-field tool-range"><span>${esc(label)} <b data-val="${key}">${value}</b></span><input type="range" data-opt="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
 
 const PANELS = {
+  url: () => `<section class="tool-work tw-card" data-panel="url-parser" data-handler="url-parser">
+    <div class="tool-opts">
+      <label class="tool-check"><input type="checkbox" data-opt="plus"> + 作为空格</label>
+      <label class="tool-check"><input type="checkbox" data-opt="dupe" checked> 重复键保存为数组</label>
+    </div>
+    <div class="tw-ed">
+      <div style="display:contents">
+        <textarea data-input rows="4" spellcheck="false" aria-label="URL" placeholder="https://zuhejian.com/tools/url-parser?q=cmd&amp;page=2"></textarea>
+        <div class="tw-empty" data-empty>
+          <p>https://zuhejian.com/tools/url-parser?q=cmd&amp;page=2</p>
+          <button class="tw-sample" type="button" data-act="sample">载入示例</button>
+        </div>
+      </div>
+      <template data-sample>https://zuhejian.com/tools/url-parser?q=cmd&amp;page=2&amp;tag=a&amp;tag=b</template>
+    </div>
+    <dl class="kv-list" data-parts></dl>
+    <div class="qv-head">
+      <span>查询参数</span>
+      <div class="tw-seg" role="group" aria-label="查询参数视图">
+        <button class="tw-seg-btn" type="button" data-qv="text" aria-pressed="true">文本</button>
+        <button class="tw-seg-btn" type="button" data-qv="tree" aria-pressed="false">树形</button>
+        <button class="tw-seg-btn" type="button" data-qv="table" aria-pressed="false">表格</button>
+        <button class="tw-seg-btn" type="button" data-qv="json" aria-pressed="false">JSON</button>
+      </div>
+      <button class="tw-btn tw-btn-ghost" type="button" data-act="copy">复制</button>
+    </div>
+    <div class="qv-pane" data-qv-pane="text"><pre class="qv-pre" data-qv-text></pre></div>
+    <div class="qv-pane" data-qv-pane="tree" hidden><div data-qv-tree></div></div>
+    <div class="qv-pane" data-qv-pane="table" hidden><div class="tv-tablewrap" data-qv-table></div></div>
+    <div class="qv-pane" data-qv-pane="json" hidden><pre class="qv-pre" data-qv-json></pre></div>
+    <div class="tool-extra" data-extra hidden></div>
+    <footer class="tw-foot">
+      <div class="tw-actions">
+        <button class="tw-btn tw-btn-primary" type="button" data-act="run">解析</button>
+        <button class="tw-btn tw-btn-ghost" type="button" data-act="clear">清空</button>
+      </div>
+      <div class="tw-meta">
+        <span class="tw-status" data-status role="status" aria-live="polite">需要完整协议，例如 https://zuhejian.com/tools</span>
+        <span class="tw-kbd" aria-hidden="true"><kbd>Ctrl</kbd><kbd>↵</kbd></span>
+        <span class="tw-local">本地处理</span>
+      </div>
+    </footer>
+  </section>`,
   colorPicker: () => `<section class="tool-work" data-panel="color-picker" data-handler="color-picker">
     <div class="tool-grid tool-grid-2">
       ${field("取色", `<input type="color" data-opt="hex" value="#0072f5">`)}
