@@ -119,9 +119,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=53">
+  <link rel="stylesheet" href="tools.css?v=54">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=88" defer></script>
+  <script src="tools.js?v=93" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -426,6 +426,57 @@ function noticePanel(tool) {
 const rangeRow = (key, label, min, max, value, step = 1) => `<label class="tool-field tool-range"><span>${esc(label)} <b data-val="${key}">${value}</b></span><input type="range" data-opt="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
 
 const PANELS = {
+  cookie: () => `<section class="tool-work tw-card" data-panel="cookie-parser" data-handler="cookie-parser">
+    <div class="tool-opts">
+      <div class="tool-field"><span>解析对象</span>
+        <div class="tool-seg ck-seg" role="group" aria-label="解析对象">
+          <button class="tw-seg-btn" type="button" data-act="mode" data-ck-val="cookie" aria-pressed="true">Cookie 头</button>
+          <button class="tw-seg-btn" type="button" data-act="mode" data-ck-val="set" aria-pressed="false">Set-Cookie</button>
+        </div>
+        <input type="hidden" data-opt="mode" value="cookie">
+      </div>
+      <label class="tool-check"><input type="checkbox" data-opt="decode" checked> URL 解码值</label>
+    </div>
+    <div class="tw-ed">
+      <div style="display:contents">
+        <textarea data-input rows="4" spellcheck="false" aria-label="Cookie 或 Set-Cookie 头" placeholder="hi_theme=dark; hi_lang=zh-CN"></textarea>
+        <div class="tw-empty" data-empty>
+          <p>粘贴 Cookie 或 Set-Cookie 头</p>
+          <button class="tw-sample" type="button" data-act="sampleCookie">Cookie 示例</button>
+          <button class="tw-sample" type="button" data-act="sampleSet">Set-Cookie 示例</button>
+        </div>
+      </div>
+    </div>
+    <dl class="kv-list" data-parts></dl>
+    <div class="ck-warn" data-ck-warn></div>
+    <div class="qv-head">
+      <span data-ck-title>Cookie</span>
+      <div class="tw-seg" role="group" aria-label="解析结果视图">
+        <button class="tw-seg-btn" type="button" data-qv="text" aria-pressed="true">文本</button>
+        <button class="tw-seg-btn" type="button" data-qv="tree" aria-pressed="false">树形</button>
+        <button class="tw-seg-btn" type="button" data-qv="table" aria-pressed="false">表格</button>
+        <button class="tw-seg-btn" type="button" data-qv="json" aria-pressed="false">JSON</button>
+      </div>
+      <button class="tw-btn tw-btn-ghost" type="button" data-act="copy">复制</button>
+    </div>
+    <div class="qv-pane" data-qv-pane="text"><pre class="qv-pre" data-qv-text></pre></div>
+    <div class="qv-pane" data-qv-pane="tree" hidden><div data-qv-tree></div></div>
+    <div class="qv-pane" data-qv-pane="table" hidden><div class="tv-tablewrap" data-qv-table></div></div>
+    <div class="qv-pane" data-qv-pane="json" hidden><pre class="qv-pre" data-qv-json></pre></div>
+    <div class="tool-extra" data-extra hidden></div>
+    <footer class="tw-foot">
+      <div class="tw-actions">
+        <button class="tw-btn tw-btn-primary" type="button" data-act="run">解析</button>
+        <button class="tw-btn tw-btn-ghost" type="button" data-act="load">加载我的 cookie</button>
+        <button class="tw-btn tw-btn-ghost" type="button" data-act="clear">清空</button>
+      </div>
+      <div class="tw-meta">
+        <span class="tw-status" data-status role="status" aria-live="polite">按 RFC 6265 解析；document.cookie 看不到 HttpOnly cookie</span>
+        <span class="tw-kbd" aria-hidden="true"><kbd>Ctrl</kbd><kbd>↵</kbd></span>
+        <span class="tw-local">本地处理</span>
+      </div>
+    </footer>
+  </section>`,
   cron: () => `<section class="tool-work tw-card" data-panel="cron-parser" data-handler="cron-parser">
     <div class="tool-opts">
       <div class="tool-field"><span>时区</span><select data-opt="tz"><option value="local">本地</option><option value="utc">UTC</option></select></div>

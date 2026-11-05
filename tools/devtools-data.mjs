@@ -243,7 +243,7 @@ export const TOOLS = [
   T("cron-parser", "Cron 表达式解析器", "cron", "debug", "解析 5 / 6 段 Cron，给出中文说明、字段明细与未来运行时间，支持本地与 UTC、@daily 等别名和 JAN / MON 名称。", "Cron 定时", "cron 表达式 解析 定时 任务 时区 utc", { k: "custom", panel: "cron" }),
   T("user-agent-parser", "User-Agent 解析器", "UA", "debug", "识别浏览器、内核、操作系统和设备类型。", "UA 解析", "user agent ua 浏览器 操作系统 设备", text("User-Agent", "Mozilla/5.0 ...", "解析结果", [], [["run", "解析"]])),
   T("url-parser", "URL 解析器", "url", "debug", "拆开协议、主机、端口、路径、查询参数与片段；查询参数支持文本、树形、表格、JSON 四种视图，重复键保留为数组，缺少协议方案会直接报错而不自动补全。", "URL 解析", "url 解析 参数 query 拆分 视图 json 表格", { k: "custom", panel: "url" }),
-  T("cookie-parser", "Cookie 解析器", "cookie", "debug", "解析 Cookie 字符串或 Set-Cookie 头。", "Cookie 解析", "cookie 解析 set-cookie 属性", text("Cookie 字符串", "a=1; b=2; Path=/", "解析结果")),
+  T("cookie-parser", "Cookie 解析器", "cookie", "debug", "解析 Cookie 请求头或 Set-Cookie 响应头：拆分属性、解码值、统计字节数，并标出 SameSite=None 缺 Secure、Max-Age 与 Expires 冲突、已过期等配置问题。", "Cookie 解析", "cookie 解析 set-cookie 属性 samesite secure httponly 大小", { k: "custom", panel: "cookie" }),
   T("http-status-codes", "HTTP 状态码", "404", "reference", "按类别和关键词筛选状态码，附常见原因。", "HTTP 状态码", "http 状态码 200 404 500 502", { k: "table", panel: "http" }),
   T("subnet-calculator", "子网计算器", "/24", "network", "计算 IPv4 子网，支持网络地址、广播、主机数和掩码。", "IPv4 子网", "子网 计算 ipv4 掩码 cidr", { k: "custom", panel: "subnet" }),
   T("cidr-calculator", "CIDR 计算器", "cidr", "network", "把 CIDR 或 IPv4 地址展开为网络地址、广播地址、子网掩码和主机数。", "CIDR", "cidr 计算 网段 范围 子网", text("CIDR 或 IPv4 地址", "10.0.0.0/8", "规范化 CIDR")),
