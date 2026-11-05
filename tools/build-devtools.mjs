@@ -121,7 +121,7 @@ function head({ title, description, url, page, tool }) {
   <link rel="stylesheet" href="../commands/commands.css?v=7">
   <link rel="stylesheet" href="tools.css?v=53">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=81" defer></script>
+  <script src="tools.js?v=88" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -426,6 +426,48 @@ function noticePanel(tool) {
 const rangeRow = (key, label, min, max, value, step = 1) => `<label class="tool-field tool-range"><span>${esc(label)} <b data-val="${key}">${value}</b></span><input type="range" data-opt="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
 
 const PANELS = {
+  cron: () => `<section class="tool-work tw-card" data-panel="cron-parser" data-handler="cron-parser">
+    <div class="tool-opts">
+      <div class="tool-field"><span>时区</span><select data-opt="tz"><option value="local">本地</option><option value="utc">UTC</option></select></div>
+      <div class="tool-field"><span>预览次数</span><select data-opt="count"><option>5</option><option>3</option><option>10</option></select></div>
+    </div>
+    <div class="tw-ed">
+      <div style="display:contents">
+        <textarea data-input rows="3" spellcheck="false" aria-label="Cron 表达式" placeholder="0 3 * * *"></textarea>
+        <div class="tw-empty" data-empty>
+          <p>分 · 时 · 日 · 月 · 周</p>
+          <button class="tw-sample" type="button" data-act="sample">载入示例</button>
+        </div>
+      </div>
+      <template data-sample>0 3 * * *</template>
+    </div>
+    <dl class="kv-list" data-cron-summary></dl>
+    <div class="qv-head"><span>字段明细</span></div>
+    <div class="tv-tablewrap" data-cron-fields></div>
+    <div class="qv-head"><span>接下来 <span data-cron-count>5</span> 次运行</span><span data-cron-tz>本地时区</span></div>
+    <div class="tv-tablewrap" data-cron-runs></div>
+    <div class="qv-head"><span>常用预设</span></div>
+    <div class="jp-cheats" data-cron-presets>
+      <button class="jp-chip" type="button" data-act="preset" data-cron-preset="* * * * *"><code>* * * * *</code><span>每分钟</span></button>
+      <button class="jp-chip" type="button" data-act="preset" data-cron-preset="*/15 * * * *"><code>*/15 * * * *</code><span>每 15 分钟</span></button>
+      <button class="jp-chip" type="button" data-act="preset" data-cron-preset="0 * * * *"><code>0 * * * *</code><span>每小时</span></button>
+      <button class="jp-chip" type="button" data-act="preset" data-cron-preset="0 0 * * *"><code>0 0 * * *</code><span>每天午夜</span></button>
+      <button class="jp-chip" type="button" data-act="preset" data-cron-preset="0 0 * * 0"><code>0 0 * * 0</code><span>每周日 00:00</span></button>
+      <button class="jp-chip" type="button" data-act="preset" data-cron-preset="0 0 1 * *"><code>0 0 1 * *</code><span>每月 1 日</span></button>
+      <button class="jp-chip" type="button" data-act="preset" data-cron-preset="0 0 1 1 *"><code>0 0 1 1 *</code><span>每年 1 月 1 日</span></button>
+    </div>
+    <footer class="tw-foot">
+      <div class="tw-actions">
+        <button class="tw-btn tw-btn-primary" type="button" data-act="run">解析</button>
+        <button class="tw-btn tw-btn-ghost" type="button" data-act="clear">清空</button>
+      </div>
+      <div class="tw-meta">
+        <span class="tw-status" data-status role="status" aria-live="polite">支持 5 段与 6 段（含秒）、@daily 等别名、JAN / MON 名称</span>
+        <span class="tw-kbd" aria-hidden="true"><kbd>Ctrl</kbd><kbd>↵</kbd></span>
+        <span class="tw-local">本地处理</span>
+      </div>
+    </footer>
+  </section>`,
   url: () => `<section class="tool-work tw-card" data-panel="url-parser" data-handler="url-parser">
     <div class="tool-opts">
       <label class="tool-check"><input type="checkbox" data-opt="plus"> + 作为空格</label>
