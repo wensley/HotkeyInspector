@@ -258,8 +258,10 @@ export const TOOLS = [
     { k: "checkbox", key: "os", label: "包含操作系统文件", checked: true },
     { k: "checkbox", key: "ide", label: "包含编辑器文件", checked: true }
   ], [["run", "生成"]])),
-  T("htaccess-generator", "htaccess 生成器", "ht", "generate", "生成 HTTPS 跳转、SPA 回退和缓存规则。", "htaccess Apache", "htaccess 生成 重写 跳转 缓存", text("域名", "zuhejian.com", "结果", [
+  T("htaccess-generator", "htaccess 生成器", "ht", "generate", "生成 HTTPS 跳转、www 统一、index.html 清理、SPA 回退（限 .htaccess 所在目录）和静态资源缓存规则，不写死域名、不产生重定向循环。", "htaccess Apache", "htaccess 生成 重写 跳转 缓存 spa index www", text("站点域名", "zuhejian.com", "结果", [
     { k: "checkbox", key: "https", label: "强制 HTTPS", checked: true },
+    { k: "checkbox", key: "www", label: "www 统一到裸域", checked: false },
+    { k: "checkbox", key: "index", label: "去掉多余的 index.html", checked: false },
     { k: "checkbox", key: "spa", label: "SPA 回退到 index.html", checked: false },
     { k: "checkbox", key: "cache", label: "静态资源缓存", checked: true }
   ], [["run", "生成"]])),
