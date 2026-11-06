@@ -241,7 +241,7 @@ export const TOOLS = [
   T("timestamp-converter", "时间戳转换器", "ts", "debug", "Unix 秒 / 毫秒与本地时间、UTC、ISO 互转。", "Unix 时间戳", "时间戳 unix timestamp 转换 日期", { k: "custom", panel: "timestamp" }),
   T("regex-tester", "RegEx 测试器", ".*", "debug", "实时显示匹配、分组和高亮。", "正则 测试", "正则 regex 测试 匹配 分组", { k: "custom", panel: "regex" }),
   T("cron-parser", "Cron 表达式解析器", "cron", "debug", "解析 5 / 6 段 Cron，给出中文说明、字段明细与未来运行时间，支持本地与 UTC、@daily 等别名和 JAN / MON 名称。", "Cron 定时", "cron 表达式 解析 定时 任务 时区 utc", { k: "custom", panel: "cron" }),
-  T("user-agent-parser", "User-Agent 解析器", "UA", "debug", "识别浏览器、内核、操作系统和设备类型。", "UA 解析", "user agent ua 浏览器 操作系统 设备", text("User-Agent", "Mozilla/5.0 ...", "解析结果", [], [["run", "解析"]])),
+  T("user-agent-parser", "User-Agent 解析器", "UA", "debug", "拆分任意 UA 字符串：浏览器与版本、渲染引擎（Blink / Gecko / WebKit / Trident / EdgeHTML）、操作系统与版本、设备类型与型号，并识别 Googlebot、AhrefsBot、curl 等爬虫与客户端。", "UA 解析", "user agent ua 浏览器 版本 内核 引擎 操作系统 设备 型号 爬虫 bot", { k: "custom", panel: "ua" }),
   T("url-parser", "URL 解析器", "url", "debug", "拆开协议、主机、端口、路径、查询参数与片段；查询参数支持文本、树形、表格、JSON 四种视图，重复键保留为数组，缺少协议方案会直接报错而不自动补全。", "URL 解析", "url 解析 参数 query 拆分 视图 json 表格", { k: "custom", panel: "url" }),
   T("cookie-parser", "Cookie 解析器", "cookie", "debug", "解析 Cookie 请求头或 Set-Cookie 响应头：拆分属性、解码值、统计字节数，并标出 SameSite=None 缺 Secure、Max-Age 与 Expires 冲突、已过期等配置问题。", "Cookie 解析", "cookie 解析 set-cookie 属性 samesite secure httponly 大小", { k: "custom", panel: "cookie" }),
   T("http-status-codes", "HTTP 状态码", "404", "reference", "按类别和关键词筛选状态码，附常见原因。", "HTTP 状态码", "http 状态码 200 404 500 502", { k: "table", panel: "http" }),

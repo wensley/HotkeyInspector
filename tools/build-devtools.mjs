@@ -119,9 +119,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=54">
+  <link rel="stylesheet" href="tools.css?v=55">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=96" defer></script>
+  <script src="tools.js?v=98" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -426,6 +426,46 @@ function noticePanel(tool) {
 const rangeRow = (key, label, min, max, value, step = 1) => `<label class="tool-field tool-range"><span>${esc(label)} <b data-val="${key}">${value}</b></span><input type="range" data-opt="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
 
 const PANELS = {
+  ua: () => `<section class="tool-work tw-card" data-panel="user-agent-parser" data-handler="user-agent-parser">
+    <div class="tw-ed">
+      <div style="display:contents">
+        <textarea data-input rows="3" spellcheck="false" aria-label="User-Agent" placeholder="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"></textarea>
+        <div class="tw-empty" data-empty>
+          <p>粘贴一条 User-Agent 字符串</p>
+          <button class="tw-sample" type="button" data-act="sample">载入示例</button>
+        </div>
+      </div>
+      <template data-sample>Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15</template>
+    </div>
+    <div class="ua-cards" data-ua-cards></div>
+    <div class="qv-head">
+      <span>解析结果</span>
+      <div class="tw-seg" role="group" aria-label="解析结果视图">
+        <button class="tw-seg-btn" type="button" data-qv="text" aria-pressed="true">文本</button>
+        <button class="tw-seg-btn" type="button" data-qv="tree" aria-pressed="false">树形</button>
+        <button class="tw-seg-btn" type="button" data-qv="table" aria-pressed="false">表格</button>
+        <button class="tw-seg-btn" type="button" data-qv="json" aria-pressed="false">JSON</button>
+      </div>
+      <button class="tw-btn tw-btn-ghost" type="button" data-act="copy">复制</button>
+    </div>
+    <div class="qv-pane" data-qv-pane="text"><pre class="qv-pre" data-qv-text></pre></div>
+    <div class="qv-pane" data-qv-pane="tree" hidden><div data-qv-tree></div></div>
+    <div class="qv-pane" data-qv-pane="table" hidden><div class="tv-tablewrap" data-qv-table></div></div>
+    <div class="qv-pane" data-qv-pane="json" hidden><pre class="qv-pre" data-qv-json></pre></div>
+    <div class="tool-extra" data-extra hidden></div>
+    <footer class="tw-foot">
+      <div class="tw-actions">
+        <button class="tw-btn tw-btn-primary" type="button" data-act="run">解析</button>
+        <button class="tw-btn tw-btn-ghost" type="button" data-act="mine">使用浏览器当前的 UA</button>
+        <button class="tw-btn tw-btn-ghost" type="button" data-act="clear">清空</button>
+      </div>
+      <div class="tw-meta">
+        <span class="tw-status" data-status role="status" aria-live="polite">UA 是自报的，可被伪造</span>
+        <span class="tw-kbd" aria-hidden="true"><kbd>Ctrl</kbd><kbd>↵</kbd></span>
+        <span class="tw-local">本地处理</span>
+      </div>
+    </footer>
+  </section>`,
   cookie: () => `<section class="tool-work tw-card" data-panel="cookie-parser" data-handler="cookie-parser">
     <div class="tool-opts">
       <div class="tool-field"><span>解析对象</span>
