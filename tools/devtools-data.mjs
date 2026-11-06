@@ -279,7 +279,7 @@ export const TOOLS = [
   ])),
 
   /* ---------- 图像 ---------- */
-  T("heic-to-jpg", "HEIC 转 JPG", "heic", "image", "在浏览器本地把 iPhone HEIC 照片转成 JPG。", "HEIC JPG", "heic jpg 转换 iphone 照片", { k: "custom", panel: "imageConvert", opts: [{ k: "select", key: "format", label: "输出格式", options: ["JPG", "PNG", "WebP"], value: "JPG" }] }, ["heic2any"]),
+  T("heic-to-jpg", "HEIC 转 JPG", "heic", "image", "在浏览器本地把 iPhone HEIC 照片转成 JPG。", "HEIC JPG", "heic jpg 转换 iphone 照片", { k: "custom", panel: "imageConvert" }, ["heicTo"]),
   T("image-compressor", "图片压缩器", "zip", "image", "用 Canvas 压缩 JPG、PNG、WebP，可调质量。", "图片 压缩", "图片 压缩 jpg png webp 质量", { k: "custom", panel: "imageConvert", opts: [{ k: "select", key: "format", label: "输出格式", options: ["JPG", "WebP", "PNG"], value: "JPG" }, { k: "number", key: "quality", label: "质量（0.1-1）", min: 0.1, max: 1, step: 0.05, value: 0.8 }] }),
   T("svg-to-png", "SVG 转 PNG", "svg", "image", "按倍率把 SVG 栅格化为 PNG。", "SVG PNG", "svg png 转换 栅格化", { k: "custom", panel: "imageConvert", opts: [{ k: "number", key: "scale", label: "倍率", min: 1, max: 8, value: 2 }] }),
   T("png-to-jpg", "PNG 转 JPG", "png", "image", "批量把 PNG 转为 JPG，可设置背景色。", "PNG JPG", "png jpg 转换 批量", { k: "custom", panel: "imageConvert", opts: [{ k: "color", key: "bg", label: "背景色", value: "#ffffff" }] }),

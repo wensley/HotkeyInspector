@@ -28,7 +28,7 @@ const LIB_FILES = {
   jsonpath: "vendor/jsonpath.js",
   terser: "vendor/terser.js",
   gifenc: "vendor/gifenc.js",
-  heic2any: "vendor/heic2any.js",
+  heicTo: "vendor/heic-to-global.js",
   beautify: "vendor/beautify-bundle.js",
   jsonrepair: "vendor/jsonrepair.js",
   fflate: "vendor/fflate.js",
@@ -37,7 +37,7 @@ const LIB_FILES = {
 };
 
 /* ESM 模块库需要用 type="module" 加载 */
-const ESM_LIBS = new Set(["brotli", "zstd"]);
+const ESM_LIBS = new Set(["brotli", "zstd", "heicTo"]);
 
 /* 第三方依赖的出处与许可证，用于在工具页如实标注 */
 const LIB_META = {
@@ -53,7 +53,7 @@ const LIB_META = {
   jsonpath: ["jsonpath-plus", "MIT"],
   terser: ["terser", "BSD-2-Clause"],
   gifenc: ["gifenc", "MIT"],
-  heic2any: ["heic2any", "MIT"],
+  heicTo: ["heic-to（内含 libheif）", "LGPL-3.0"],
   beautify: ["js-beautify", "MIT"],
   jsonrepair: ["jsonrepair", "ISC"],
   fflate: ["fflate", "MIT"],
@@ -121,7 +121,7 @@ function head({ title, description, url, page, tool }) {
   <link rel="stylesheet" href="../commands/commands.css?v=7">
   <link rel="stylesheet" href="tools.css?v=55">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=98" defer></script>
+  <script src="tools.js?v=100" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
