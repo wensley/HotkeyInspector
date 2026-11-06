@@ -155,7 +155,7 @@ export const TOOLS = [
     text("CSS", ".tool-card { display: flex; gap: 12px; }", "结果", [], [["run", "压缩"], ["beautify", "美化"]]), ["beautify"]),
   T("javascript-minifier", "JavaScript 压缩", "js↓", "format", "用 Terser 压缩 JavaScript（会改变变量名），也可反向美化。", "JS 压缩", "javascript js 压缩 minify terser 美化",
     text("JavaScript", "function searchTools(q) { return tools.filter((t) => t.name.includes(q)); }", "结果", [], [["run", "压缩"], ["beautify", "美化"]]), ["terser", "beautify"]),
-  T("iam-policy-explainer", "AWS IAM 策略解读器", "iam", "security", "把 IAM Policy JSON 展开为“谁在什么资源上能做什么”。", "IAM AWS", "iam policy aws 权限 解读 策略", text("IAM Policy JSON", '{"Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}', "解读结果")),
+  T("iam-policy-explainer", "AWS IAM 策略解读器", "iam", "security", "把 IAM Policy JSON 展开为“谁在什么资源上能做什么”。", "IAM AWS", "iam policy aws 权限 解读 策略", { k: "custom", panel: "iam" }),
   T("curl-converter", "curl 转代码", "curl", "network", "把 curl 命令转成 fetch、Python requests 或 Go。", "curl fetch", "curl 转换 fetch python go 代码", text("curl 命令", "curl -X POST https://api.example.com -H 'Content-Type: application/json' -d '{\"a\":1}'", "代码", [
     { k: "select", key: "target", label: "目标语言", options: ["fetch", "Python requests", "Go"], value: "fetch" }
   ])),

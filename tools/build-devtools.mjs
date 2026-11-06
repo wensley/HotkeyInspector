@@ -119,9 +119,9 @@ function head({ title, description, url, page, tool }) {
   <script src="../theme-init.js?v=1"></script>
   <link rel="stylesheet" href="../styles.css?v=9">
   <link rel="stylesheet" href="../commands/commands.css?v=7">
-  <link rel="stylesheet" href="tools.css?v=55">
+  <link rel="stylesheet" href="tools.css?v=56">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=100" defer></script>
+  <script src="tools.js?v=103" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -426,6 +426,48 @@ function noticePanel(tool) {
 const rangeRow = (key, label, min, max, value, step = 1) => `<label class="tool-field tool-range"><span>${esc(label)} <b data-val="${key}">${value}</b></span><input type="range" data-opt="${key}" min="${min}" max="${max}" step="${step}" value="${value}"></label>`;
 
 const PANELS = {
+  iam: () => `<section class="tool-work tw-card" data-panel="iam-policy-explainer" data-handler="iam-policy-explainer">
+    <div class="tw-ed">
+      <div style="display:contents">
+        <textarea data-input rows="10" spellcheck="false" aria-label="IAM Policy JSON" placeholder='{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"*"}]}'></textarea>
+        <div class="tw-empty" data-empty>
+          <p>粘贴一条 IAM Policy JSON</p>
+          <button class="tw-sample" type="button" data-act="sample">载入示例</button>
+        </div>
+      </div>
+      <template data-sample>${esc(JSON.stringify({
+        Version: "2012-10-17",
+        Statement: [
+          { Sid: "ReadBucket", Effect: "Allow", Action: ["s3:GetObject", "s3:ListBucket"], Resource: ["arn:aws:s3:::my-bucket", "arn:aws:s3:::my-bucket/*"] },
+          { Sid: "Adminish", Effect: "Allow", Action: "s3:*", Resource: "*" },
+          { Sid: "PassRole", Effect: "Allow", Action: "iam:PassRole", Resource: "arn:aws:iam::123456789012:role/deploy" },
+          { Sid: "DenyDelete", Effect: "Deny", Action: "s3:DeleteObject", Resource: "*" }
+        ]
+      }, null, 2))}</template>
+    </div>
+    <div class="ua-cards" data-iam-cards></div>
+    <div class="qv-head">
+      <span>逐条解读</span>
+      <button class="tw-btn tw-btn-ghost" type="button" data-act="copy">复制解读</button>
+    </div>
+    <div class="iam-list" data-iam-list></div>
+    <details class="iam-raw" data-iam-raw hidden>
+      <summary>归一化后的 JSON</summary>
+      <pre class="qv-pre" data-iam-json></pre>
+    </details>
+    <div class="tool-extra" data-extra hidden></div>
+    <footer class="tw-foot">
+      <div class="tw-actions">
+        <button class="tw-btn tw-btn-primary" type="button" data-act="run">解读</button>
+        <button class="tw-btn tw-btn-ghost" type="button" data-act="clear">清空</button>
+      </div>
+      <div class="tw-meta">
+        <span class="tw-status" data-status role="status" aria-live="polite">按 IAM 语法本地解读，不连接 AWS</span>
+        <span class="tw-kbd" aria-hidden="true"><kbd>Ctrl</kbd><kbd>↵</kbd></span>
+        <span class="tw-local">本地处理</span>
+      </div>
+    </footer>
+  </section>`,
   ua: () => `<section class="tool-work tw-card" data-panel="user-agent-parser" data-handler="user-agent-parser">
     <div class="tw-ed">
       <div style="display:contents">
