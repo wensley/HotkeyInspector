@@ -121,7 +121,7 @@ function head({ title, description, url, page, tool }) {
   <link rel="stylesheet" href="../commands/commands.css?v=7">
   <link rel="stylesheet" href="tools.css?v=56">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=158" defer></script>
+  <script src="tools.js?v=165" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -270,6 +270,7 @@ const SAMPLES = {
   "cidr-calculator": "10.0.0.0/8",
   "binary-translator": "zuhejian",
   "binary-to-decimal": "101101",
+  "htaccess-generator": "zuhejian.com",
   "decimal-to-binary": "45",
   "text-to-binary": "Hi",
   "binary-to-text": "01001000 01101001",
