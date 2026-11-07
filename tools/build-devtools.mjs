@@ -121,7 +121,7 @@ function head({ title, description, url, page, tool }) {
   <link rel="stylesheet" href="../commands/commands.css?v=7">
   <link rel="stylesheet" href="tools.css?v=56">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=141" defer></script>
+  <script src="tools.js?v=154" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -397,7 +397,7 @@ function asciiTable() {
   for (let i = 32; i <= 126; i += 1) {
     const ch = i === 32 ? "空格" : String.fromCharCode(i);
     const esc4 = i === 60 ? "&lt;" : i === 62 ? "&gt;" : i === 38 ? "&amp;" : esc(ch);
-    rows.push(`<tr class="cmd-row"><td data-label="十进制"><code>${i}</code></td><td data-label="十六进制"><code>${i.toString(16).toUpperCase().padStart(2, "0")}</code></td><td data-label="八进制"><code>${i.toString(8).padStart(3, "0")}</code></td><td data-label="二进制"><code>${i.toString(2).padStart(8, "0")}</code></td><td data-label="字符"><code>${esc4}</code></td></tr>`);
+    rows.push(`<tr class="cmd-row" data-ascii-row data-code="${i}" data-ch="${esc(i === 32 ? " " : ch)}"><td data-label="十进制"><code>${i}</code></td><td data-label="十六进制"><code>${i.toString(16).toUpperCase().padStart(2, "0")}</code></td><td data-label="八进制"><code>${i.toString(8).padStart(3, "0")}</code></td><td data-label="二进制"><code>${i.toString(2).padStart(8, "0")}</code></td><td data-label="字符"><code>${esc4}</code></td></tr>`);
   }
   return `<section class="tool-work" data-panel="ascii-table" data-handler="ascii-table">
     <div class="cmd-controls" role="search"><label class="cmd-field cmd-search"><span>搜索</span><input id="ascii-search" type="search" placeholder="输入字符或数字，如 65、A、0x41"></label></div>
@@ -410,7 +410,10 @@ function asciiTable() {
 function httpTable() {
   const rows = HTTP_STATUS.map((s) => `<tr class="cmd-row" data-http-row><td data-label="状态码"><div class="cmd-term"><code>${s.code}</code></div></td><td data-label="名称">${esc(s.name)}</td><td data-label="中文">${esc(s.zh)}</td><td data-label="说明">${esc(s.desc)}</td></tr>`).join("\n");
   return `<section class="tool-work" data-panel="http-status-codes" data-handler="http-status-codes">
-    <div class="cmd-controls" role="search"><label class="cmd-field cmd-search"><span>搜索</span><input id="http-search" type="search" placeholder="输入 404、重定向、超时等关键词"></label></div>
+    <div class="cmd-controls" role="search">
+      <label class="cmd-field cmd-search"><span>搜索</span><input id="http-search" type="search" placeholder="输入 404、重定向、超时等关键词"></label>
+      <label class="cmd-field cmd-filter"><span>类别</span><select id="http-class"><option value="">全部</option><option value="1">1xx 信息</option><option value="2">2xx 成功</option><option value="3">3xx 重定向</option><option value="4">4xx 客户端错误</option><option value="5">5xx 服务端错误</option></select></label>
+    </div>
     <p class="tool-status" data-status role="status" aria-live="polite">显示 ${HTTP_STATUS.length} / ${HTTP_STATUS.length} 个状态码</p>
     <div class="cmd-table-wrap"><table class="cmd-table"><caption class="cmd-caption">HTTP 状态码速查表</caption><thead><tr><th>状态码</th><th>名称</th><th>中文</th><th>说明</th></tr></thead><tbody id="http-body">${rows}</tbody></table></div>
     <p class="cmd-empty" id="http-empty" hidden>没有匹配的状态码。</p>

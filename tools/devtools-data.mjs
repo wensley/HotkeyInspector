@@ -190,7 +190,7 @@ export const TOOLS = [
   T("meta-tag-previewer", "Meta 标签预览器", "meta", "text", "解析 HTML 的 title、description 和 Open Graph，预览分享卡片。", "Meta OG", "meta 标签 预览 open graph seo 分享", { k: "custom", panel: "metaPreview" }, []),
 
   /* ---------- CSS ---------- */
-  T("px-to-rem", "PX 转 REM", "rem", "css", "按基准字号把 px 换算为 rem，也支持反向换算。", "px rem", "px rem 换算 单位 响应式", text("像素值", "16", "结果", [
+  T("px-to-rem", "PX 转 REM", "rem", "css", "按基准字号把 px 换算为 rem，也支持反向换算。", "px rem", "px rem 换算 单位 响应式", text("数值（px 或 rem）", "16", "结果", [
     { k: "number", key: "base", label: "基准字号（px）", min: 1, max: 100, value: 16 },
     { k: "select", key: "dir", label: "方向", options: ["px → rem", "rem → px"], value: "px → rem" }
   ])),
