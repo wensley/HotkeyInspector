@@ -121,7 +121,7 @@ function head({ title, description, url, page, tool }) {
   <link rel="stylesheet" href="../commands/commands.css?v=7">
   <link rel="stylesheet" href="tools.css?v=56">
 ${(tool ? [...new Set([...(tool.libs || []), ...((tool.ui && tool.ui.libs) || [])])] : []).map((lib) => ESM_LIBS.has(lib) ? `  <script src="${LIB_FILES[lib]}?v=3" type="module"></script>` : `  <script src="${LIB_FILES[lib]}?v=3" defer></script>`).join("\n")}
-  <script src="tools.js?v=128" defer></script>
+  <script src="tools.js?v=135" defer></script>
   <script src="../version.js?v=2" defer></script>
 </head>
 <body class="cmd-page tool-page" data-page="${attr(page)}"${tool ? ` data-tool="${attr(tool.id)}"` : ""}>
@@ -898,33 +898,42 @@ const PANELS = {
   </section>`,
   metaGenerator: () => `<section class="tool-work" data-panel="meta-tag-generator" data-handler="meta-tag-generator">
     <div class="tool-grid tool-grid-2">
-      ${field("页面标题", `<input data-opt="title" value="${attr(SITE.title)}" spellcheck="false">`)}
-      ${field("网站名称", `<input data-opt="siteName" value="${attr(SITE.name)}" spellcheck="false">`)}
-      <div class="tool-field tool-span-2"><span>Meta 描述</span><textarea data-opt="description" rows="3" spellcheck="false">${esc(SITE.desc)}</textarea></div>
-      ${field("Canonical URL", `<input data-opt="url" value="${attr(SITE.tools)}" spellcheck="false">`)}
-      ${field("社交图片 URL", `<input data-opt="image" value="${attr(SITE.image)}" spellcheck="false">`)}
-      ${field("Twitter 账号", `<input data-opt="twitter" value="@zuhejian" spellcheck="false">`)}
+      ${field("页面标题", '<input data-opt="title" spellcheck="false" placeholder="例如 开发者工具 · 快捷键大全">')}
+      ${field("网站名称", '<input data-opt="siteName" spellcheck="false" placeholder="例如 快捷键大全">')}
+      <div class="tool-field tool-span-2"><span>Meta 描述</span><textarea data-opt="description" rows="3" spellcheck="false" placeholder="一句话说明这个页面能做什么，建议 60–160 个字符"></textarea></div>
+      ${field("Canonical URL", '<input data-opt="url" spellcheck="false" placeholder="https://example.com/page">')}
+      ${field("社交图片 URL", '<input data-opt="image" spellcheck="false" placeholder="https://example.com/cover.png">')}
+      ${field("Twitter 账号", '<input data-opt="twitter" spellcheck="false" placeholder="@yourhandle">')}
       ${field("Robots", seg("robots", ["index, follow", "noindex, nofollow"], "index, follow"))}
       ${field("Open Graph 类型", seg("ogType", ["website", "article", "product"], "website"))}
       ${field("Twitter card", seg("card", ["summary_large_image", "summary"], "summary_large_image"))}
+      <div class="tool-actions tool-span-2"><button class="tw-btn tw-btn-ghost" type="button" data-act="sample">填入本站示例</button></div>
+      <template data-meta-sample>${esc(JSON.stringify({
+        title: SITE.title,
+        siteName: SITE.name,
+        description: SITE.desc,
+        url: SITE.tools,
+        image: SITE.image,
+        twitter: "@zuhejian"
+      }))}</template>
     </div>
     <div class="meta-prev" data-preview>
       <div>
         <p class="meta-prev-label">Google 搜索结果</p>
         <div class="meta-serp">
-          <p class="meta-serp-site" data-serp-site>zuhejian.com › tools</p>
-          <p class="meta-serp-title" data-serp-title>${esc(SITE.title)}</p>
-          <p class="meta-serp-desc" data-serp-desc>${esc(SITE.desc)}</p>
+          <p class="meta-serp-site" data-serp-site>example.com</p>
+          <p class="meta-serp-title" data-serp-title>（缺少标题）</p>
+          <p class="meta-serp-desc" data-serp-desc>（缺少描述）</p>
         </div>
       </div>
       <div>
         <p class="meta-prev-label">社交卡片</p>
         <div class="meta-card">
-          <div class="meta-card-media" data-card-media><img alt="" data-card-img><span class="meta-card-empty" data-card-empty>无法加载图片</span></div>
+          <div class="meta-card-media is-empty" data-card-media><img alt="" data-card-img><span class="meta-card-empty" data-card-empty>无法加载图片</span></div>
           <div class="meta-card-body">
-            <p class="meta-card-site" data-card-site>zuhejian.com</p>
-            <p class="meta-card-title" data-card-title>${esc(SITE.title)}</p>
-            <p class="meta-card-desc" data-card-desc>${esc(SITE.desc)}</p>
+            <p class="meta-card-site" data-card-site>example.com</p>
+            <p class="meta-card-title" data-card-title>（缺少标题）</p>
+            <p class="meta-card-desc" data-card-desc>（缺少描述）</p>
           </div>
         </div>
       </div>
