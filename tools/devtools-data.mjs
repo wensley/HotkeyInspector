@@ -105,8 +105,10 @@ export const TOOLS = [
     text("输入 JSON", '{"site":"zuhejian.com","tools":105}', "结果", [], [["format", "格式化"], ["minify", "压缩"], ["repair", "修复"], ["validate", "仅校验"]], ["text", "tree", "table"], "in"), ["jsonrepair"]),
   T("json-validator", "JSON 校验器", "✓", "format", "校验 JSON 语法，并给出错误位置和修复提示。", "JSON 校验", "json 校验 语法 错误 位置",
     text("输入 JSON", '{"site":"zuhejian.com"}', "校验结果", [], [["validate", "校验"], ["repair", "修复"]], ["text", "tree", "table"], "in"), ["jsonrepair"]),
-  T("json-to-csv", "JSON 转 CSV", "csv", "format", "把对象数组转成 CSV，自动收集列名并处理引号。", "JSON CSV", "json csv 转换 表格",
-    text("JSON 数组", '[{"name":"JSON 格式化","count":1},{"name":"Base64 编解码","count":2}]', "CSV", [], [["run", null]], ["text", "tree", "table"], "in")),
+  T("json-to-csv", "JSON 转 CSV", "csv", "format", "把对象数组转成 CSV，合并所有字段做表头，嵌套对象写成 JSON，引号与换行按 RFC 4180 转义。", "JSON CSV", "json csv 转换 表格 excel bom 嵌套",
+    text("JSON 数组", '[{"name":"JSON 格式化","count":1},{"name":"Base64 编解码","count":2}]', "CSV", [
+      { k: "checkbox", key: "bom", label: "开头加 BOM（Excel 直接打开中文不乱码）" }
+    ], [["run", null]], ["text", "tree", "table"], "in")),
   T("csv-to-json", "CSV 转 JSON", "[]", "format", "把 CSV 转成对象数组，支持双引号包裹和转义。", "CSV JSON", "csv json 转换 表格",
     text("CSV", "name,count\n快捷键,3056\n命令,778", "JSON", [], [["run", null]], ["text", "tree", "table"], "out")),
   T("json-to-typescript", "JSON 转 TypeScript", "TS", "format", "从 JSON 推断 TypeScript 类型，可选 interface 或 type 写法。", "TypeScript 类型", "json typescript 类型 接口 interface type",
