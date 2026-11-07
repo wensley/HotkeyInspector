@@ -253,10 +253,14 @@ export const TOOLS = [
   /* ---------- 生成器 ---------- */
   T("qr-code-generator", "QR Code 生成器", "qr", "generate", "从文本或 URL 生成二维码，可下载 PNG。", "二维码 QR", "二维码 qr code 生成 下载", { k: "custom", panel: "qr" }, ["qrcode"]),
   T("favicon-generator", "favicon 生成器", "ico", "image", "从一张图片生成多尺寸 favicon 并打包下载。", "favicon ICO", "favicon 生成 ico 图标", { k: "custom", panel: "favicon" }),
-  T("gitignore-generator", "gitignore 生成器", "git", "generate", "按语言和操作系统组合 .gitignore 模板。", "gitignore 模板", "gitignore 生成 模板 语言", text("选择模板", "", "结果", [
+  T("gitignore-generator", "gitignore 生成器", "git", "generate", "按语言、系统、编辑器与额外场景组合 .gitignore；Rust 不忽略 Cargo.lock，Go 的 vendor 可选保留。", "gitignore 模板", "gitignore 生成 模板 语言 rust cargo.lock go vendor unity", text("选择模板", "", "结果", [
     { k: "select", key: "lang", label: "语言 / 框架", options: ["Node", "Python", "Go", "Java", "Rust", "PHP", "Unity"], value: "Node" },
     { k: "checkbox", key: "os", label: "包含操作系统文件", checked: true },
-    { k: "checkbox", key: "ide", label: "包含编辑器文件", checked: true }
+    { k: "checkbox", key: "ide", label: "包含编辑器文件", checked: true },
+    { k: "checkbox", key: "keepLock", label: "保留依赖锁文件（Cargo.lock / package-lock）", checked: true },
+    { k: "checkbox", key: "keepVendor", label: "保留 vendor / 第三方目录" },
+    { k: "checkbox", key: "env", label: "忽略环境变量文件（.env）", checked: true },
+    { k: "checkbox", key: "junk", label: "忽略系统垃圾与日志", checked: true }
   ], [["run", "生成"]])),
   T("htaccess-generator", "htaccess 生成器", "ht", "generate", "生成 HTTPS 跳转、www 统一、index.html 清理、SPA 回退（限 .htaccess 所在目录）和静态资源缓存规则，不写死域名、不产生重定向循环。", "htaccess Apache", "htaccess 生成 重写 跳转 缓存 spa index www", text("站点域名", "zuhejian.com", "结果", [
     { k: "checkbox", key: "https", label: "强制 HTTPS", checked: true },
