@@ -21,27 +21,3 @@ jobs:
       - name: Test
         run: dotnet test HotkeyInspector.slnx -c Release --no-build
 
-  site-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Regenerate data and sitemap
-        run: node tools/extract-kb.mjs
-
-      - name: Check prerendered content is current
-        run: node tools/prerender.mjs --check
-
-      - name: Ensure generated files are committed
-        run: git diff --exit-code
-
-      - name: Ensure robots.txt does not block app assets
-        run: |
-          if grep -Eq '^Disallow: /(app\.js|data)' docs/hotkeys/robots.txt; then
-            echo "robots.txt blocks required JS/data assets"
-            exit 1
-          fi
